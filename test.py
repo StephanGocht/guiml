@@ -116,16 +116,12 @@ class GUI:
 
         self.ctx = cairo.Context(surface)
 
+        self.update(0)
         window.push_handlers("on_draw", self.on_draw)
-        clock.schedule_interval(self.update, 0.5)
+
+        clock.schedule_interval(self.update, 0.1)
 
     def on_draw(self):
-        # Update texture from sruface data
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
-            self.properties.width, self.properties.height, 0, gl.GL_BGRA,
-            gl.GL_UNSIGNED_BYTE, self.surface_data)
-
         # draw the texture
         self.texture.blit(0, 0)
 
@@ -137,7 +133,16 @@ class GUI:
         self.tree = ET.parse('gui.xml')
         wrapText(self.tree.getroot())
 
+    def clear(self):
+        self.ctx.set_operator(cairo.Operator.CLEAR)
+        self.ctx.rectangle(0, 0, self.properties.width, self.properties.height)
+        self.ctx.fill()
+
+        self.ctx.set_operator(cairo.Operator.OVER)
+
     def update(self, dt):
+        self.clear()
+
         self.reload_styles()
         self.reload_markup()
 
@@ -146,6 +151,12 @@ class GUI:
 
         component = Div(properties)
         component.draw(self.ctx)
+
+        # Update texture from sruface data
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
+            self.properties.width, self.properties.height, 0, gl.GL_BGRA,
+            gl.GL_UNSIGNED_BYTE, self.surface_data)
 
 
 def addText(element, text, position):
