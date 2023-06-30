@@ -96,12 +96,6 @@ class Text:
         ctx.move_to(self.properties.position.left, self.properties.position.top)
         ctx.show_text(self.text)
 
-window = window.Window(width = 400, height = 400)
-
-@window.event('on_draw')
-def on_draw():
-    window.clear()
-
 class GUI:
     @dataclass
     class Properties:
@@ -126,8 +120,6 @@ class GUI:
         clock.schedule_interval(self.update, 0.5)
 
     def on_draw(self):
-        print("draw")
-
         # Update texture from sruface data
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
@@ -180,9 +172,16 @@ def wrapText(node):
                 addText(element, child.tail, i + 1)
                 child.tail = None
 
+window = window.Window(width = 400, height = 400)
+
+def on_draw():
+    window.clear()
 
 def main():
     gui = GUI(window, GUI.Properties())
+
+    # run on draw first, i.e., push it as last handler
+    window.push_handlers("on_draw", on_draw)
     app.run()
 
 if __name__ == '__main__':
