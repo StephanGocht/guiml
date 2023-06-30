@@ -1,0 +1,22 @@
+div:
+  position:
+    top: 0
+    left: 0
+    bottom: 400
+    right: 400
+
+  margin:
+    top: 50
+    left: 50
+    bottom: 50
+    right: 50
+
+  border:
+    width: 3
+    color:
+      green: 1
+
+  background:
+    red: 1
+    green: 1
+    alpha: 0.5
