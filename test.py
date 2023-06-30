@@ -82,19 +82,69 @@ class Text:
     class Properties(WidgetProperty):
         font_size: int = 0
         color: Color = field(default_factory = Color)
+        text: str = ""
 
-    def __init__(self, properties, data):
+    def __init__(self, properties):
         self.properties = properties
-        self.text = data
 
     def draw(self, ctx):
+        color = self.properties.color
         ctx.set_source_rgb(color.red, color.green, color.blue)
         ctx.set_font_size(self.properties.font_size)
         ctx.select_font_face("Arial",
                              cairo.FONT_SLANT_NORMAL,
                              cairo.FONT_WEIGHT_NORMAL)
         ctx.move_to(self.properties.position.left, self.properties.position.top)
-        ctx.show_text(self.text)
+        ctx.show_text(self.properties.text)
+
+class ComponentManager:
+    def __init__(self):
+        self.reload_styles()
+        self.reload_markup()
+
+    def get_properties(self, node, component_cls):
+        converter = make_converter()
+
+        data = {}
+
+        if node.tag in self.style:
+            data = self.style[node.tag]
+
+        return converter.structure(data, component_cls.Properties)
+
+    def mk_component(self, node):
+        if node.tag not in _components:
+            return
+
+        component_cls = _components[node.tag]
+        properties = self.get_properties(node, component_cls)
+
+        return component_cls(properties)
+
+    def reload_styles(self):
+        with open("styles.yml", "r") as f:
+            self.style = yaml.load(f, Loader = yaml.BaseLoader)
+
+    def reload_markup(self):
+        self.tree = ET.parse('gui.xml')
+        wrapText(self.tree.getroot())
+
+    def update(self):
+        self.reload_styles()
+        self.reload_markup()
+
+        self.components = list()
+
+        queue = list()
+        queue.append(self.tree.getroot())
+        while queue:
+            node = queue.pop()
+            component = self.mk_component(node)
+            if component:
+                self.components.append(component)
+
+            for child in node:
+                queue.append(child)
 
 class GUI:
     @dataclass
@@ -102,8 +152,10 @@ class GUI:
         width: int = 400
         height: int = 400
 
-    def __init__(self, window, properties):
+    def __init__(self, window, properties, components):
         self.properties = properties
+
+        self.components = components
 
         width = self.properties.width
         height = self.properties.height
@@ -125,14 +177,6 @@ class GUI:
         # draw the texture
         self.texture.blit(0, 0)
 
-    def reload_styles(self):
-        with open("styles.yml", "r") as f:
-            self.style = yaml.load(f, Loader = yaml.BaseLoader)
-
-    def reload_markup(self):
-        self.tree = ET.parse('gui.xml')
-        wrapText(self.tree.getroot())
-
     def clear(self):
         self.ctx.set_operator(cairo.Operator.CLEAR)
         self.ctx.rectangle(0, 0, self.properties.width, self.properties.height)
@@ -143,14 +187,10 @@ class GUI:
     def update(self, dt):
         self.clear()
 
-        self.reload_styles()
-        self.reload_markup()
+        self.components.update()
 
-        converter = make_converter()
-        properties = converter.structure(self.style["div"], Div.Properties)
-
-        component = Div(properties)
-        component.draw(self.ctx)
+        for component in self.components.components:
+            component.draw(self.ctx)
 
         # Update texture from sruface data
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
@@ -189,7 +229,9 @@ def on_draw():
     window.clear()
 
 def main():
-    gui = GUI(window, GUI.Properties())
+    manager = ComponentManager()
+
+    gui = GUI(window, GUI.Properties(), manager)
 
     # run on draw first, i.e., push it as last handler
     window.push_handlers("on_draw", on_draw)
