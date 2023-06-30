@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 
 <application>
-  <div foo.baa="baa">OK</div>
-  Foo
-  <div foo="baa">Man</div>
+  <div class="background">
+    <div class="box" id="upper_box">OK</div>
+    Foo
+    <div class="box" id="lower_box">Man</div>
+  </div>
 </application>

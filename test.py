@@ -19,6 +19,28 @@ def component(name):
 
     return register
 
+class MergeError(Exception):
+    pass
+
+def merge_data(a, b):
+    """
+    Merges b into a, b taking precedence. b is not modified.
+    """
+
+    if isinstance(a, list) and isinstance(b, list):
+        return b + a
+    elif isinstance(a, dict) and isinstance(b, dict):
+        result = dict(**a)
+        for key, value in b.items():
+            if key in result:
+                result[key] = merge_data(result[key], value)
+            else:
+                result[key] = value
+
+        return result
+    else:
+        return b
+
 @dataclass
 class Color:
     red: float = 0.
@@ -107,8 +129,20 @@ class ComponentManager:
 
         data = {}
 
-        if node.tag in self.style:
-            data = self.style[node.tag]
+
+        data = merge_data(data, self.style.get(node.tag, {}))
+
+        classes = node.get("class")
+        if classes:
+            classes = classes.split(" ")
+            # let earlier mention have precedence
+            classes.reverse()
+            for style_class in classes:
+                data = merge_data(data, self.style.get(".%s"%(style_class), {}))
+
+        tag_id = node.get("id")
+        if tag_id:
+            data = merge_data(data, self.style.get("$%s"%(tag_id), {}))
 
         return converter.structure(data, component_cls.Properties)
 
