@@ -8,15 +8,15 @@
     red: 0.8
     green: 0.8
     blue: 0.8
-    alpha: 1
+    alpha: 1.
 
   layout: grid
   rows: 3
   columns: 3
 
-$lower_box:
+$red:
   column: 0
-  row: 1
+  row: 0
   colspan: 3
 
   background:
@@ -25,16 +25,18 @@ $lower_box:
     blue: 0.5
     alpha: 1
 
-$upper_box:
+$green:
   column: 1
-  row: 0
+  row: 1
+
+  layout: hflow
 
   background:
     red: 0.5
     green: 1
     blue: 0.5
-    alpha: 1
+    alpha: 1.
 
-$third_box:
-  column: 0
-  row: 0
+text:
+  color:
+    alpha: 1.

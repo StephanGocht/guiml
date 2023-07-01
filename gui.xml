@@ -2,8 +2,7 @@
 
 <application>
   <div class="background">
-    <div class="box" id="upper_box"></div>
-    <div class="box" id="lower_box"></div>
-    <div class="box" id="third_box"></div>
+    <div class="box" id="red"></div>
+    <div class="box" id="green">This is some text. More text.</div>
   </div>
 </application>

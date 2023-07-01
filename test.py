@@ -59,7 +59,7 @@ class Color:
     red: float = 0.
     green: float = 0.
     blue: float = 0.
-    alpha: float = 1.
+    alpha: float = 0.
 
 @dataclass
 class Border:
@@ -76,14 +76,30 @@ class Rectangle:
     def is_valid(self):
         return self.left < self.right and self.top < self.bottom
 
+    @property
+    def width(self):
+        return self.right - self.left
+
+    @property
+    def height(self):
+        return self.bottom - self.right
 
 @dataclass
 class WidgetProperty:
     # bounding box for registering clicks
     position: Rectangle = field(default_factory = Rectangle)
 
+class Component:
+    def __init__(self, properties):
+        self.properties = properties
+
+        self.on_init()
+
+    def on_init(self):
+        pass
+
 @component("div")
-class Div:
+class Div(Component):
     @dataclass
     class Properties(WidgetProperty):
         border: Border = field(default_factory = Border)
@@ -92,9 +108,6 @@ class Div:
         background: Color = field(default_factory = Color)
 
         layout: str = ""
-
-    def __init__(self, properties):
-        self.properties = properties
 
     def draw(self, ctx):
         ctx.new_path()
@@ -117,16 +130,33 @@ class Div:
         ctx.set_source(pat)
         ctx.fill()
 
+def get_extent(text, font_size):
+    fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    fontMatrix = cairo.Matrix()
+    fontMatrix.scale(font_size, font_size)
+    user2device = cairo.Matrix()
+    options = cairo.FontOptions()
+
+    font = cairo.ScaledFont(fontFace, fontMatrix, user2device, options)
+    return font.text_extents(text)
+
+
 @component("text")
-class Text:
+class Text(Component):
     @dataclass
     class Properties(WidgetProperty):
-        font_size: int = 0
+        font_size: int = 14
         color: Color = field(default_factory = Color)
         text: str = ""
 
-    def __init__(self, properties):
-        self.properties = properties
+    @property
+    def width(self):
+        extend = get_extent(self.properties.text, self.properties.font_size)
+        return extend.x_advance
+
+    @property
+    def height(self):
+        return self.properties.font_size
 
     def draw(self, ctx):
         color = self.properties.color
@@ -135,8 +165,46 @@ class Text:
         ctx.select_font_face("Arial",
                              cairo.FONT_SLANT_NORMAL,
                              cairo.FONT_WEIGHT_NORMAL)
-        ctx.move_to(self.properties.position.left, self.properties.position.top)
+        ctx.move_to(self.properties.position.left, self.properties.position.top + self.height)
         ctx.show_text(self.properties.text)
+
+@layout("hflow")
+class HorizontalFlow:
+    @dataclass
+    class Properties(WidgetProperty):
+        pass
+
+    @dataclass
+    class ChildProperties(WidgetProperty):
+        pass
+
+    def __init__(self, properties):
+        self.properties = properties
+
+    def layout(self, children):
+        width = self.properties.position.width
+        height = self.properties.position.height
+
+        posx = self.properties.position.left
+        posy = self.properties.position.top
+        max_height = 0
+
+        for child in children:
+            if posx + child.width > self.properties.position.right:
+                posx = self.properties.position.left
+                posy += max_height
+                max_height = 0
+
+            position = child.properties.position
+            position.top = posy
+            position.left = posx
+
+            posx += child.width
+            max_height = max(max_height, child.height)
+
+            position.bottom = posx
+            position.right = posy + child.height
+
 
 @layout("grid")
 class GridLayout:
@@ -237,6 +305,8 @@ class ComponentManager:
         tag_id = node.get("id")
         if tag_id:
             data = merge_data(data, self.style.get("$%s"%(tag_id), {}))
+
+        data["text"] = node.text
 
         return data
 
@@ -387,12 +457,15 @@ class GUI:
 def addText(element, text, position):
     if text:
         text = text.strip()
+        # todo replace new line with space and condense space to single space
 
     if text:
-        txt = ET.Element('text')
-        txt.text = text
+        texts = text.split(" ")
+        for i, text in enumerate(texts):
+            txt = ET.Element('text')
+            txt.text = text + " "
 
-        element.insert(position, txt)
+            element.insert(position + i, txt)
 
 def wrapText(node):
     queue = list()
@@ -400,13 +473,13 @@ def wrapText(node):
     while queue:
         element = queue.pop()
         if element.tag != "text":
-            addText(element, element.text, 0)
-            element.text = None
-
-            for i, child in enumerate(element):
+            for i, child in reversed(list(enumerate(element))):
                 queue.append(child)
                 addText(element, child.tail, i + 1)
                 child.tail = None
+
+            addText(element, element.text, 0)
+            element.text = None
 
 window = window.Window(width = 400, height = 400)
 
