@@ -10,11 +10,24 @@ from dataclasses import dataclass, field
 
 from pyglet import app, clock, gl, image, window
 
+from typing import Optional
+
+import os
+
 _components = {}
 
 def component(name):
     def register(cls):
         _components[name] = cls
+        return cls
+
+    return register
+
+_layouts = {}
+
+def layout(name):
+    def register(cls):
+        _layouts[name] = cls
         return cls
 
     return register
@@ -60,6 +73,10 @@ class Rectangle:
     bottom: int = 0
     right: int = 0
 
+    def is_valid(self):
+        return self.left < self.right and self.top < self.bottom
+
+
 @dataclass
 class WidgetProperty:
     # bounding box for registering clicks
@@ -73,6 +90,8 @@ class Div:
         margin: Rectangle = field(default_factory = Rectangle)
         padding: Rectangle = field(default_factory = Rectangle)
         background: Color = field(default_factory = Color)
+
+        layout: str = ""
 
     def __init__(self, properties):
         self.properties = properties
@@ -119,17 +138,92 @@ class Text:
         ctx.move_to(self.properties.position.left, self.properties.position.top)
         ctx.show_text(self.properties.text)
 
+@layout("grid")
+class GridLayout:
+    @dataclass
+    class Properties(WidgetProperty):
+        rows: int = 1
+        columns: int = 1
+
+    @dataclass
+    class ChildProperties(WidgetProperty):
+        row: int = 0
+        rowspan: int = 1
+        column: int = 0
+        colspan: int = 1
+
+    def __init__(self, properties):
+        self.properties = properties
+
+    def layout(self, children):
+        assert(self.properties.position.is_valid())
+
+        position = self.properties.position
+        width = position.right - position.left
+        height = position.bottom - position.top
+
+        col2pos = lambda col: col * (width / self.properties.columns)
+        row2pos = lambda row: row * height / self.properties.rows
+
+        for i, child in enumerate(children):
+            position = child.properties.position
+
+            position.top = row2pos(child.properties.row)
+            position.bottom = row2pos(child.properties.row + child.properties.rowspan)
+
+            position.left = col2pos(child.properties.column)
+            position.right = col2pos(child.properties.column + child.properties.colspan)
+
+class LazyFileLoader:
+    def __init__(self, filename):
+        self.filename = filename
+        self.read_time = None
+        self.data = None
+
+        self.reload()
+
+    def reload(self):
+        m_time = os.stat(self.filename).st_mtime
+        if self.read_time != m_time:
+            self.read_time = m_time
+            self.load()
+            return True
+
+        return False
+
+    def load(self):
+        with open(self.filename, "r") as f:
+            self.data = f.read()
+
+        return self.data
+
+class StyleLoader(LazyFileLoader):
+    def load(self):
+        with open(self.filename, "r") as f:
+            self.data = yaml.load(f, Loader = yaml.BaseLoader)
+
+class MarkupLoader(LazyFileLoader):
+    def load(self):
+        self.data = ET.parse('gui.xml')
+        wrapText(self.data.getroot())
+
 class ComponentManager:
+    @property
+    def tree(self):
+        return self.markup_loader.data
+
+    @property
+    def style(self):
+        return self.style_loader.data
+
     def __init__(self):
-        self.reload_styles()
-        self.reload_markup()
+        self.style_loader = StyleLoader("styles.yml")
+        self.markup_loader = MarkupLoader("gui.xml")
 
-    def get_properties(self, node, component_cls):
-        converter = make_converter()
+        self.do_update()
 
+    def collect_properties(self, node):
         data = {}
-
-
         data = merge_data(data, self.style.get(node.tag, {}))
 
         classes = node.get("class")
@@ -144,15 +238,34 @@ class ComponentManager:
         if tag_id:
             data = merge_data(data, self.style.get("$%s"%(tag_id), {}))
 
-        return converter.structure(data, component_cls.Properties)
+        return data
 
-    def mk_component(self, node):
+    def make_properties(self, component_cls, node, parents):
+        data = self.collect_properties(node)
+
+        property_classes = [component_cls.Properties]
+
+        layout_cls = data.get("layout", None)
+        if layout_cls:
+            layout_cls = _layouts[layout_cls]
+            property_classes.append(layout_cls.Properties)
+
+        if parents:
+            layout_parent_cls = getattr(parents[-1].properties, "layout", None)
+            if layout_parent_cls:
+                layout_parent_cls = _layouts[layout_parent_cls]
+                property_classes.append(layout_parent_cls.ChildProperties)
+
+        converter = make_converter()
+        property_class = dataclass(type("Properties", tuple(property_classes), dict()))
+        return converter.structure(data, property_class)
+
+    def mk_component(self, node, parents):
         if node.tag not in _components:
             return
 
         component_cls = _components[node.tag]
-        properties = self.get_properties(node, component_cls)
-
+        properties = self.make_properties(component_cls, node, parents)
         return component_cls(properties)
 
     def reload_styles(self):
@@ -163,22 +276,60 @@ class ComponentManager:
         self.tree = ET.parse('gui.xml')
         wrapText(self.tree.getroot())
 
+    def __iter__(self):
+        return iter(self.components.values())
+
     def update(self):
-        self.reload_styles()
-        self.reload_markup()
+        needUpdate = False
+        needUpdate |= self.style_loader.reload()
+        needUpdate |= self.markup_loader.reload()
 
-        self.components = list()
+        if needUpdate:
+            self.do_update()
 
-        queue = list()
-        queue.append(self.tree.getroot())
-        while queue:
-            node = queue.pop()
-            component = self.mk_component(node)
-            if component:
-                self.components.append(component)
+    def do_update(self):
+        self.components = dict()
 
-            for child in node:
-                queue.append(child)
+        self.make_components(self.tree.getroot(), [])
+        self.layout(self.tree.getroot(), [])
+
+    def make_components(self, node, parents):
+        component = self.mk_component(node, parents)
+        if component:
+            self.components[node] = component
+
+            parents.append(component)
+
+        for child in node:
+            self.make_components(child, parents)
+
+        if component:
+            parents.pop()
+
+    def layout(self, node, parents):
+        component = self.components.get(node)
+        if component:
+            layout_cls = getattr(component.properties, "layout", None)
+            if layout_cls:
+                layout_cls = _layouts[layout_cls]
+                layouter = layout_cls(component.properties)
+
+                childs = list()
+                for child in node:
+                    child_component = self.components[child]
+                    if child_component:
+                        childs.append(child_component)
+
+                layouter.layout(childs)
+
+            parents.append(component)
+
+        for child in node:
+            self.layout(child, parents)
+
+        if component:
+            parents.pop()
+
 
 class GUI:
     @dataclass
@@ -223,7 +374,7 @@ class GUI:
 
         self.components.update()
 
-        for component in self.components.components:
+        for component in self.components:
             component.draw(self.ctx)
 
         # Update texture from sruface data

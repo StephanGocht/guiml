@@ -2,8 +2,8 @@
 
 <application>
   <div class="background">
-    <div class="box" id="upper_box">OK</div>
-    Foo
-    <div class="box" id="lower_box">Man</div>
+    <div class="box" id="upper_box"></div>
+    <div class="box" id="lower_box"></div>
+    <div class="box" id="third_box"></div>
   </div>
 </application>
