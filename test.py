@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 import sys
 import yaml
 
+import copy
+
 from cattrs.preconf.pyyaml import make_converter
 
 from dataclasses import dataclass, field
@@ -242,6 +244,76 @@ class GridLayout:
             position.left = col2pos(child.properties.column)
             position.right = col2pos(child.properties.column + child.properties.colspan)
 
+class Manipulator:
+    """
+    Manipulate the DOM. Operations need to be idempoetnt, i.e., f(f(x)) = f(x).
+
+    """
+
+    def __call__(self, node):
+        """
+        Manipulates the DOM.
+
+        Returns:
+            bool: if the DOM was changed
+        """
+
+        pass
+
+class DynamicDOM:
+    def __init__(self, manipulators):
+        self.manipulators = manipulators
+
+    def update(self, origin):
+        self.tree = copy.deepcopy(origin)
+
+        modified = True
+        while modified:
+
+            modified = False
+            for manipulator in self.manipulators:
+                modified |= manipulator(self.tree.getroot())
+
+                if modified:
+                    break
+
+        return self.tree
+
+class TextManipulator:
+    def addText(self, element, text, position):
+        if text:
+            text = text.strip()
+            # todo replace new line with space and condense space to single space
+
+        if text:
+            self.modified = True
+
+            texts = text.split(" ")
+            for i, text in enumerate(texts):
+                txt = ET.Element('text')
+                txt.text = text + " "
+
+                element.insert(position + i, txt)
+
+    def __call__(self, node):
+        self.modified = False
+
+        queue = list()
+        queue.append(node)
+        while queue:
+            element = queue.pop()
+            if element.tag != "text":
+                for i, child in reversed(list(enumerate(element))):
+                    queue.append(child)
+                    self.addText(element, child.tail, i + 1)
+                    child.tail = None
+
+                self.addText(element, element.text, 0)
+                element.text = None
+
+        return self.modified
+
+
 class LazyFileLoader:
     def __init__(self, filename):
         self.filename = filename
@@ -272,8 +344,7 @@ class StyleLoader(LazyFileLoader):
 
 class MarkupLoader(LazyFileLoader):
     def load(self):
-        self.data = ET.parse('gui.xml')
-        wrapText(self.data.getroot())
+        self.data = ET.parse(self.filename)
 
 class ComponentManager:
     @property
@@ -287,6 +358,9 @@ class ComponentManager:
     def __init__(self):
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader("gui.xml")
+        self.dynamic_dom = DynamicDOM([
+                TextManipulator(),
+            ])
 
         self.do_update()
 
@@ -338,14 +412,6 @@ class ComponentManager:
         properties = self.make_properties(component_cls, node, parents)
         return component_cls(properties)
 
-    def reload_styles(self):
-        with open("styles.yml", "r") as f:
-            self.style = yaml.load(f, Loader = yaml.BaseLoader)
-
-    def reload_markup(self):
-        self.tree = ET.parse('gui.xml')
-        wrapText(self.tree.getroot())
-
     def __iter__(self):
         return iter(self.components.values())
 
@@ -358,10 +424,12 @@ class ComponentManager:
             self.do_update()
 
     def do_update(self):
+        tree = self.dynamic_dom.update(self.tree)
+
         self.components = dict()
 
-        self.make_components(self.tree.getroot(), [])
-        self.layout(self.tree.getroot(), [])
+        self.make_components(tree.getroot(), [])
+        self.layout(tree.getroot(), [])
 
     def make_components(self, node, parents):
         component = self.mk_component(node, parents)
@@ -386,7 +454,7 @@ class ComponentManager:
 
                 childs = list()
                 for child in node:
-                    child_component = self.components[child]
+                    child_component = self.components.get(child)
                     if child_component:
                         childs.append(child_component)
 
@@ -453,33 +521,6 @@ class GUI:
             self.properties.width, self.properties.height, 0, gl.GL_BGRA,
             gl.GL_UNSIGNED_BYTE, self.surface_data)
 
-
-def addText(element, text, position):
-    if text:
-        text = text.strip()
-        # todo replace new line with space and condense space to single space
-
-    if text:
-        texts = text.split(" ")
-        for i, text in enumerate(texts):
-            txt = ET.Element('text')
-            txt.text = text + " "
-
-            element.insert(position + i, txt)
-
-def wrapText(node):
-    queue = list()
-    queue.append(node)
-    while queue:
-        element = queue.pop()
-        if element.tag != "text":
-            for i, child in reversed(list(enumerate(element))):
-                queue.append(child)
-                addText(element, child.tail, i + 1)
-                child.tail = None
-
-            addText(element, element.text, 0)
-            element.text = None
 
 window = window.Window(width = 400, height = 400)
 
