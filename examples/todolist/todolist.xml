@@ -1,1 +1,4 @@
-<todo control="for item in self.todos" py_item="items"></todo>
+<template>
+  <div class="text">To be done.</div>
+  <todo control="for item in self.todos" py_item="items"></todo>
+</template>

@@ -8,6 +8,8 @@ from pyglet import app, clock, gl, image, window
 import os
 
 
+from guiml.filecache import StyleLoader, MarkupLoader
+
 
 from guiml.transformer import *
 
@@ -34,41 +36,7 @@ def merge_data(a, b):
     else:
         return b
 
-class LazyFileLoader:
-    def __init__(self, filename):
-        self.filename = filename
-        self.read_time = None
-        self.data = None
 
-        self.reload()
-
-    def reload(self):
-        m_time = os.stat(self.filename).st_mtime
-        if self.read_time != m_time:
-            self.read_time = m_time
-            self.load()
-            return True
-
-        return False
-
-    def load(self):
-        with open(self.filename, "r") as f:
-            self.data = f.read()
-
-        return self.data
-
-class StyleLoader(LazyFileLoader):
-    def load(self):
-        with open(self.filename, "r") as f:
-            self.data = yaml.load(f, Loader = yaml.BaseLoader)
-
-        if self.data is None:
-            # the file was empty
-            self.data = {}
-
-class MarkupLoader(LazyFileLoader):
-    def load(self):
-        self.data = ET.parse(self.filename)
 
 class ComponentManager:
     @property
@@ -83,6 +51,7 @@ class ComponentManager:
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
         self.dynamic_dom = DynamicDOM([
+                TemplatesTransformer(),
                 TextTransformer(),
             ])
 
@@ -132,7 +101,7 @@ class ComponentManager:
         if node.tag not in _components:
             return
 
-        component_cls = _components[node.tag]
+        component_cls = _components[node.tag].component_class
         properties = self.make_properties(component_cls, node, parents)
         return component_cls(properties)
 

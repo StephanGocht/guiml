@@ -5,9 +5,9 @@
     bottom: 400
     right: 400
   background:
-    red: 0.8
-    green: 0.8
-    blue: 0.8
+    red: 0.9
+    green: 0.9
+    blue: 0.9
     alpha: 1.
 
   layout: grid

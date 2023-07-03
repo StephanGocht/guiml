@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 @component(
   name = "todolist",
-  template = "examples/todo_list/todolist.xml"
+  template = "todolist.xml"
 )
 class TodoList(Component):
   @dataclass

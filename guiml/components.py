@@ -1,11 +1,31 @@
 from dataclasses import dataclass, field
+from typing import Type, Optional
 import cairo
+
+class Component:
+    def __init__(self, properties):
+        self.properties = properties
+
+        self.on_init()
+
+    def on_init(self):
+        pass
+
+    def draw(self, ctx):
+        pass
 
 _components = {}
 
-def component(name, template = None):
+@dataclass
+class ComponentMetaProperties:
+    component_class: Type[Component]
+    name: str
+    template: Optional[str] = None
+
+def component(*args, **kwargs):
     def register(cls):
-        _components[name] = cls
+        component = ComponentMetaProperties(cls, *args, **kwargs)
+        _components[component.name] = component
         return cls
 
     return register
@@ -44,18 +64,6 @@ class Rectangle:
 class WidgetProperty:
     # bounding box for registering clicks
     position: Rectangle = field(default_factory = Rectangle)
-
-class Component:
-    def __init__(self, properties):
-        self.properties = properties
-
-        self.on_init()
-
-    def on_init(self):
-        pass
-
-    def draw(self, ctx):
-        pass
 
 @component("div")
 class Div(Component):
