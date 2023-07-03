@@ -62,6 +62,10 @@ class StyleLoader(LazyFileLoader):
         with open(self.filename, "r") as f:
             self.data = yaml.load(f, Loader = yaml.BaseLoader)
 
+        if self.data is None:
+            # the file was empty
+            self.data = {}
+
 class MarkupLoader(LazyFileLoader):
     def load(self):
         self.data = ET.parse(self.filename)
@@ -75,9 +79,9 @@ class ComponentManager:
     def style(self):
         return self.style_loader.data
 
-    def __init__(self):
+    def __init__(self, root_markup):
         self.style_loader = StyleLoader("styles.yml")
-        self.markup_loader = MarkupLoader("gui.xml")
+        self.markup_loader = MarkupLoader(root_markup)
         self.dynamic_dom = DynamicDOM([
                 TextTransformer(),
             ])
@@ -243,8 +247,9 @@ class GUI:
 
 
 class Window:
-    def __init__(self):
+    def __init__(self, root_markup):
         self.window = window.Window(width = 400, height = 400)
+        self.root_markup = root_markup
 
     def on_draw(self):
         self.window.clear()
@@ -253,7 +258,7 @@ class Window:
         pass
 
     def run(self):
-        manager = ComponentManager()
+        manager = ComponentManager(self.root_markup)
 
         gui = GUI(self.window, GUI.Properties(), manager)
 

@@ -54,6 +54,9 @@ class Component:
     def on_init(self):
         pass
 
+    def draw(self, ctx):
+        pass
+
 @component("div")
 class Div(Component):
     @dataclass

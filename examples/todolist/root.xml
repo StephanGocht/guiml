@@ -1,0 +1,6 @@
+<window>
+  <div class="background">
+    <div class="text">Your todolist:</div>
+    <todolist></todolist>
+  </div>
+</window>
