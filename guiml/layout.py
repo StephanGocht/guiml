@@ -71,14 +71,14 @@ class GridLayout:
         width = position.right - position.left
         height = position.bottom - position.top
 
-        col2pos = lambda col: col * (width / self.properties.cols)
-        row2pos = lambda row: row * height / self.properties.rows
+        col2pos = lambda col: (col * (width / self.properties.cols)) + position.left
+        row2pos = lambda row: (row * height / self.properties.rows) + position.top
 
         for i, child in enumerate(children):
-            position = child.properties.position
+            child_pos = child.properties.position
 
-            position.top = row2pos(child.properties.row)
-            position.bottom = row2pos(child.properties.row + child.properties.rowspan)
+            child_pos.top = row2pos(child.properties.row)
+            child_pos.bottom = row2pos(child.properties.row + child.properties.rowspan)
 
-            position.left = col2pos(child.properties.col)
-            position.right = col2pos(child.properties.col + child.properties.colspan)
+            child_pos.left = col2pos(child.properties.col)
+            child_pos.right = col2pos(child.properties.col + child.properties.colspan)

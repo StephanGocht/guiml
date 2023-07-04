@@ -12,4 +12,4 @@ class TodoList(Component):
 
   @property
   def todos(self):
-    return self.properties.todos
+    return ["todo%i"%(i) for i in range(4)]

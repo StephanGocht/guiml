@@ -1,4 +1,9 @@
 <template>
-  <text control="for item in range(6)">Hi! </text>
+  <div class="list" py_rows="len(self.todos)">
+    <div control="for i, item in enumerate(self.todos)" class="listrow" py_row="i">
+      <text py_text="item"></text>
+    </div>
+  </div>
+
   <!--<todo control="for item in range(3)" py_item="items"></todo>-->
 </template>

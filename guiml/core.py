@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import yaml
 from cattrs.preconf.pyyaml import make_converter
 from dataclasses import dataclass, field
+import dataclasses
 from pyglet import app, clock, gl, image, window
 import os
 
@@ -16,6 +17,23 @@ from guiml.transformer import *
 from guiml.components import _components
 from guiml.layout import _layouts
 
+def tree_dfs(node):
+    """
+    Yield nodes in DFS search. On every backtrack None is returned.
+    """
+
+    queue = list()
+    queue.append(node)
+
+    while queue:
+        node = queue.pop()
+        yield node
+
+        if node is not None:
+            queue.append(None)
+
+            for child in reversed(node):
+                queue.append(child)
 
 def merge_data(a, b):
     """
@@ -76,6 +94,8 @@ class ComponentManager:
 
         data["text"] = node.text
 
+        data = merge_data(data, node.attrib)
+
         return data
 
     def make_properties(self, component_cls, node, parents):
@@ -126,8 +146,28 @@ class ComponentManager:
         self.components = dict()
 
         self.make_components(tree.getroot(), [])
-        ET.dump(tree)
         self.layout(tree.getroot(), [])
+
+        self.dump_tree(tree.getroot())
+
+
+    def dump_tree(self, node):
+        stack = list()
+        indent = 0
+        for node in tree_dfs(node):
+            if node is not None:
+                component = self.components.get(node)
+                print("  " * indent, "<%s>"%(node.tag))
+                if component:
+                    for field in dataclasses.fields(component.properties):
+                        print("  " * (indent + 2), "%s: %s"%(field.name, getattr(component.properties, field.name)))
+
+                stack.append(node.tag)
+                indent += 1
+            else:
+                indent -= 1
+                print("  " * indent, "</%s>"%(stack.pop()))
+
 
 
     def make_components(self, node, parents):
@@ -146,8 +186,6 @@ class ComponentManager:
     def layout(self, node, parents):
         component = self.components.get(node)
         if component:
-            print(component.__class__, component.properties)
-
             layout_cls = getattr(component.properties, "layout", None)
             if layout_cls:
                 layout_cls = _layouts[layout_cls]

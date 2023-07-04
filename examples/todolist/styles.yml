@@ -30,4 +30,13 @@ $todolist:
   col: 0
   row: 2
 
+  layout: grid
+  rows: 1
+  cols: 1
+
+.list:
+  layout: grid
+  cols: 1
+
+.listrow:
   layout: hflow
