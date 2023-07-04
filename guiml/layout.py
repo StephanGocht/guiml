@@ -52,13 +52,13 @@ class GridLayout:
     @dataclass
     class Properties():
         rows: int = 1
-        columns: int = 1
+        cols: int = 1
 
     @dataclass
     class ChildProperties():
         row: int = 0
         rowspan: int = 1
-        column: int = 0
+        col: int = 0
         colspan: int = 1
 
     def __init__(self, properties):
@@ -71,7 +71,7 @@ class GridLayout:
         width = position.right - position.left
         height = position.bottom - position.top
 
-        col2pos = lambda col: col * (width / self.properties.columns)
+        col2pos = lambda col: col * (width / self.properties.cols)
         row2pos = lambda row: row * height / self.properties.rows
 
         for i, child in enumerate(children):
@@ -80,5 +80,5 @@ class GridLayout:
             position.top = row2pos(child.properties.row)
             position.bottom = row2pos(child.properties.row + child.properties.rowspan)
 
-            position.left = col2pos(child.properties.column)
-            position.right = col2pos(child.properties.column + child.properties.colspan)
+            position.left = col2pos(child.properties.col)
+            position.right = col2pos(child.properties.col + child.properties.colspan)

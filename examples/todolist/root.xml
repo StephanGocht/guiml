@@ -1,6 +1,7 @@
 <window>
   <div class="background">
-    <div class="text">Your todolist:</div>
-    <todolist></todolist>
+    <div id="caption" class="text">Your todolist: </div>
+    <div id="todo_mark" control="if 3 > 4">Nothing to do!</div>
+    <todolist id="todolist"></todolist>
   </div>
 </window>

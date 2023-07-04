@@ -11,8 +11,23 @@
     alpha: 1.
 
   layout: grid
-  rows: 2
+  rows: 3
   cols: 1
 
-.text:
+$caption:
+  layout: hflow
+
+  col: 0
+  row: 0
+
+$todo_mark:
+  layout: hflow
+
+  col: 0
+  row: 1
+
+$todolist:
+  col: 0
+  row: 2
+
   layout: hflow

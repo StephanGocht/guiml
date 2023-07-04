@@ -52,6 +52,7 @@ class ComponentManager:
         self.markup_loader = MarkupLoader(root_markup)
         self.dynamic_dom = DynamicDOM([
                 TemplatesTransformer(),
+                ControlTransformer(),
                 TextTransformer(),
             ])
 
@@ -98,12 +99,15 @@ class ComponentManager:
         return converter.structure(data, property_class)
 
     def mk_component(self, node, parents):
-        if node.tag not in _components:
-            return
+        component = None
 
-        component_cls = _components[node.tag].component_class
-        properties = self.make_properties(component_cls, node, parents)
-        return component_cls(properties)
+        if node.tag in _components:
+            component_cls = _components[node.tag].component_class
+            properties = self.make_properties(component_cls, node, parents)
+            component = component_cls(properties)
+
+        self.dynamic_dom.update(node, component)
+        return component
 
     def __iter__(self):
         return iter(self.components.values())
@@ -117,12 +121,14 @@ class ComponentManager:
             self.do_update()
 
     def do_update(self):
-        tree = self.dynamic_dom.update(self.tree)
+        tree = copy.deepcopy(self.tree)
 
         self.components = dict()
 
         self.make_components(tree.getroot(), [])
+        ET.dump(tree)
         self.layout(tree.getroot(), [])
+
 
     def make_components(self, node, parents):
         component = self.mk_component(node, parents)
@@ -140,6 +146,8 @@ class ComponentManager:
     def layout(self, node, parents):
         component = self.components.get(node)
         if component:
+            print(component.__class__, component.properties)
+
             layout_cls = getattr(component.properties, "layout", None)
             if layout_cls:
                 layout_cls = _layouts[layout_cls]
@@ -217,7 +225,9 @@ class GUI:
 
 class Window:
     def __init__(self, root_markup):
-        self.window = window.Window(width = 400, height = 400)
+        # todo: window settings should be read from the xml!
+        self.window = window.Window(width = 400, height = 400, resizable = True)
+        self.window.set_location(2000, 500)
         self.root_markup = root_markup
 
     def on_draw(self):

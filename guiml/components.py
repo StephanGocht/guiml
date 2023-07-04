@@ -64,6 +64,7 @@ class Rectangle:
 class WidgetProperty:
     # bounding box for registering clicks
     position: Rectangle = field(default_factory = Rectangle)
+    layout: str = ""
 
 @component("div")
 class Div(Component):
@@ -73,8 +74,6 @@ class Div(Component):
         margin: Rectangle = field(default_factory = Rectangle)
         padding: Rectangle = field(default_factory = Rectangle)
         background: Color = field(default_factory = Color)
-
-        layout: str = ""
 
     def draw(self, ctx):
         ctx.new_path()

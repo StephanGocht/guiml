@@ -1,4 +1,4 @@
 <template>
-  <div class="text">To be done.</div>
-  <todo control="for item in self.todos" py_item="items"></todo>
+  <text control="for item in range(6)">Hi! </text>
+  <!--<todo control="for item in range(3)" py_item="items"></todo>-->
 </template>
