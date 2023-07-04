@@ -1,0 +1,58 @@
+.grid:
+  layout: grid
+  rows: 3
+  cols: 3
+
+  position:
+    top: 0
+    left: 0
+    bottom: 400
+    right: 400
+
+  background:
+    red: 0.9
+    green: 0.9
+    blue: 0.9
+    alpha: 1.
+
+$grid1:
+  layout: hflow
+
+  row: 0
+  col: 0
+
+  background:
+    red: 1
+    green: 0.5
+    blue: 0.5
+    alpha: 1.
+
+$grid2:
+  row: 0
+  col: 1
+
+  background:
+    red: 0
+    green: 0.5
+    blue: 0
+    alpha: 1.
+
+$grid3:
+  row: 1
+  col: 0
+
+  background:
+    red: 0
+    green: 0
+    blue: 0.5
+    alpha: 1.
+
+$grid4:
+  row: 1
+  col: 1
+
+  background:
+    red: 0
+    green: 0
+    blue: 0
+    alpha: 0
