@@ -4,7 +4,7 @@ import cairo
 
 class Component:
     def __init__(self, properties):
-        self.properties = properties
+        super().__setattr__("properties", properties)
 
         self.on_init()
 
@@ -13,6 +13,15 @@ class Component:
 
     def draw(self, ctx):
         pass
+
+    def __getattr__(self, name):
+        return getattr(self.properties, name)
+
+    def __setattr__(self, name, value):
+        if hasattr(self.properties, name):
+            setattr(self.properties, name, value)
+        else:
+            super().__setattr__(name, value)
 
 _components = {}
 
