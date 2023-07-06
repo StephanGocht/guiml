@@ -125,12 +125,15 @@ class ControlTransformer:
         modified = False
 
         for key in node.keys():
-            if key.startswith("py_"):
+            if key.startswith("py_") or key.startswith("on_"):
                 modified = True
                 value = node.get(key)
                 del_atribute(node, key)
                 new_value = eval(value, None, context)
-                node.set(key[3:], new_value)
+
+                if key.startswith("py_"):
+                    key = key[3:]
+                node.set(key, new_value)
 
         return modified
 
@@ -166,10 +169,10 @@ class ControlTransformer:
 
                     node.remove(child)
 
-                    for j, item in enumerate(items):
+                    for j, sibling_context in enumerate(items):
                         sibling = copy.deepcopy(child)
                         node.insert(i + j, sibling)
-                        sibling_context = {**context, **item}
+                        # sibling_context = {**context, **item}
 
                         # sibling.set(CONTEXT_ATTRIBUTE, sibling_context)
                         self.transform(sibling, sibling_context)
