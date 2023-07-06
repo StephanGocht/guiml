@@ -16,6 +16,7 @@ from guiml.transformer import *
 
 from guiml.components import _components
 from guiml.layout import _layouts
+from guiml.injectables import _injectables
 
 def tree_dfs(node):
     """
