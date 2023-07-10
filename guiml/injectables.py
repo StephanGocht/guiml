@@ -97,11 +97,14 @@ class Injector:
   def add_tag(self, tag):
     to_add = DependencyResolver(_injectables[tag])
     for injectable in to_add:
+      self.injectables[injectable] = injectable(self.get_dependencies(injectable))
+
+  def get_dependencies(self, class_with_dependencies):
       args = {}
-      for field_name, field_type in get_dependencies(injectable, with_name = True):
+      for field_name, field_type in get_dependencies(class_with_dependencies, with_name = True):
         args[field_name] = self.injectables[field_type]
 
-      self.injectables[injectable] = injectable(get_dependency_class(injectable)(**args))
+      return get_dependency_class(class_with_dependencies)(**args)
 
   def pop_tag(self):
     pass

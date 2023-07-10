@@ -3,8 +3,17 @@ from typing import Type, Optional
 import cairo
 
 class Component:
-    def __init__(self, properties):
-        super().__setattr__("properties", properties)
+    @dataclass
+    class Properties:
+        pass
+
+    @dataclass
+    class Dependencies:
+        pass
+
+    def __init__(self, properties, dependencies):
+        self.properties = properties
+        self.dependencies = dependencies
 
         self.on_init()
 
@@ -14,16 +23,22 @@ class Component:
     def draw(self, ctx):
         pass
 
+_components = {}
+
+class AsMemberMixin:
     def __getattr__(self, name):
-        return getattr(self.properties, name)
+        try:
+            return getattr(self.properties, name)
+        except AttributeError:
+            return getattr(self.dependencies, name)
 
     def __setattr__(self, name, value):
         if hasattr(self.properties, name):
             setattr(self.properties, name, value)
+        elif hasattr(self.dependencies, name):
+            setattr(self.dependencies, name, value)
         else:
             super().__setattr__(name, value)
-
-_components = {}
 
 @dataclass
 class ComponentMetaProperties:
