@@ -7,14 +7,16 @@ sys.path.extend([str(APP_PATH), str(ROOT_PATH)])
 
 os.chdir(APP_PATH)
 
-from guiml.core import Window
+from guiml.core import ComponentManager
 import todo
 import todolist
 
+from pyglet import app
+
 
 def main():
-  window = Window("root.xml")
-  window.run()
+  ComponentManager("root.xml")
+  app.run()
 
 
 if __name__ == '__main__':

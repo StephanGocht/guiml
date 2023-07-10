@@ -5,12 +5,13 @@ from collections import defaultdict
 from typing import Optional
 import typing
 
-class Patient:
+from pyglet import clock
+
+class Injectable:
   @dataclass
   class Dependencies:
     pass
 
-class Injectable:
   def __init__(self, dependencies):
     for field in dataclasses.fields(dependencies):
       setattr(self, field.name, getattr(dependencies, field.name))
@@ -115,3 +116,31 @@ class Injector:
   def __getitem__(self, key):
     return self.injectables[key]
 
+
+@injectable("window")
+class Canvas(Injectable):
+  def on_init(self):
+    # context will be created and set by the window component
+    self.context = None
+    self.drawables = list()
+
+  def add_drawable(self, drawable):
+    self.drawables.append(drawable)
+
+  def remove_drawable(self, drawable):
+    self.drawables.remove(drawable)
+
+  def draw(self):
+    for drawable in self.drawables:
+      drawable.draw(self.context)
+
+
+@injectable("application")
+class UILoop(Injectable):
+  def on_init(self):
+    clock.schedule_interval(self.on_update, 0.1)
+    self.update_listener = list()
+
+  def on_update(self, dt):
+    for listener in self.update_listener:
+      listener(dt)

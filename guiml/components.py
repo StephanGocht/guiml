@@ -1,6 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Type, Optional
+import dataclasses
+import pyglet
 import cairo
+import ctypes
+from pyglet import app, clock, gl, image, window
+
+from guiml.injectables import Canvas, UILoop
 
 class Component:
     @dataclass
@@ -83,6 +89,72 @@ class Rectangle:
     @property
     def height(self):
         return self.bottom - self.right
+
+
+@component("window")
+class Window(Component):
+    @dataclass
+    class Properties:
+        width: int = 400
+        height: int = 400
+        resizable: bool = True
+
+        top: int = 500
+        left: int = 2000
+
+    @dataclass
+    class Dependencies:
+        canvas: Canvas
+        ui_loop: UILoop
+
+    def on_init(self):
+        super().on_init()
+        self.init_window()
+        self.init_canvas()
+        self.dependencies.ui_loop.update_listener.append(self.on_update)
+
+    def init_window(self):
+        args = {key: getattr(self.properties, key) for key in ["width", "height", "resizable"]}
+        self.window = pyglet.window.Window(**args)
+        self.window.set_location(self.properties.left, self.properties.top)
+
+        self.window.push_handlers("on_draw", self.on_draw)
+
+    def on_draw(self):
+        self.window.clear()
+        # draw the texture
+        self.texture.blit(0, 0)
+
+    def init_canvas(self):
+        width = self.properties.width
+        height = self.properties.height
+
+        # Create texture backed by ImageSurface
+        self.surface_data = (ctypes.c_ubyte * (width * height * 4))()
+        surface = cairo.ImageSurface.create_for_data(self.surface_data, cairo.FORMAT_ARGB32, width, height, width * 4);
+        self.texture = image.Texture.create(width, height, gl.GL_TEXTURE_2D, gl.GL_RGBA)
+        self.texture.tex_coords = (0, 1, 0) + (1, 1, 0) + (1, 0, 0) + (0, 0, 0)
+
+        self.context = cairo.Context(surface)
+        self.dependencies.canvas.context = self.context
+
+    def clear(self):
+        self.context.set_operator(cairo.Operator.CLEAR)
+        self.context.rectangle(0, 0, self.properties.width, self.properties.height)
+        self.context.fill()
+
+        self.context.set_operator(cairo.Operator.OVER)
+
+    def on_update(self, dt):
+        self.clear()
+        self.dependencies.canvas.draw()
+
+        # Update texture from sruface data
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
+            self.properties.width, self.properties.height, 0, gl.GL_BGRA,
+            gl.GL_UNSIGNED_BYTE, self.surface_data)
+
 
 @dataclass
 class WidgetProperty:

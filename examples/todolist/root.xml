@@ -1,7 +1,9 @@
-<window>
-  <div class="background">
-    <div id="caption" class="text">Your todolist: </div>
-    <div id="todo_mark" control="if 3 > 4">Nothing to do!</div>
-    <todolist id="todolist"></todolist>
-  </div>
-</window>
+<application>
+  <window>
+    <div class="background">
+      <div id="caption" class="text">Your todolist: </div>
+      <div id="todo_mark" control="if 3 > 4">Nothing to do!</div>
+      <todolist id="todolist"></todolist>
+    </div>
+  </window>
+</application>

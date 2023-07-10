@@ -16,7 +16,7 @@ from guiml.transformer import *
 
 from guiml.components import _components
 from guiml.layout import _layouts
-from guiml.injectables import Injector
+from guiml.injectables import Injector, UILoop
 
 def tree_dfs(node):
     """
@@ -58,6 +58,10 @@ def merge_data(a, b):
 
 
 class ComponentManager:
+    @dataclass
+    class Dependencies:
+        ui_loop: UILoop
+
     @property
     def tree(self):
         return self.markup_loader.data
@@ -67,6 +71,8 @@ class ComponentManager:
         return self.style_loader.data
 
     def __init__(self, root_markup):
+        self.window = None
+
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
         self.injector = Injector()
@@ -77,6 +83,12 @@ class ComponentManager:
             ])
 
         self.do_update()
+
+
+    def on_init(self):
+        # called when application tag is encountered
+        self.dependencies.ui_loop.update_listener.append(self.on_update)
+
 
     def collect_properties(self, node):
         data = {}
@@ -123,11 +135,25 @@ class ComponentManager:
     def mk_component(self, node, parents):
         component = None
 
+        self.injector.add_tag(node.tag)
+        if node.tag == "application":
+            self.dependencies = self.injector.get_dependencies(self)
+            self.on_init()
+
+
         if node.tag in _components:
-            component_cls = _components[node.tag].component_class
-            properties = self.make_properties(component_cls, node, parents)
-            dependencies = self.injector.get_dependencies(component_cls)
-            component = component_cls(properties, dependencies)
+            #todo: add persistent components and fix hack
+            if node.tag == "window" and self.window is not None:
+                component = self.window
+            else:
+                component_cls = _components[node.tag].component_class
+                properties = self.make_properties(component_cls, node, parents)
+                dependencies = self.injector.get_dependencies(component_cls)
+                component = component_cls(properties, dependencies)
+
+                #todo: add persistent components and fix hack
+                if node.tag == "window":
+                    self.window = component
 
         self.dynamic_dom.update(node, component)
         return component
@@ -135,7 +161,7 @@ class ComponentManager:
     def __iter__(self):
         return iter(self.components.values())
 
-    def update(self):
+    def on_update(self, dt):
         needUpdate = False
         needUpdate |= self.style_loader.reload()
         needUpdate |= self.markup_loader.reload()
