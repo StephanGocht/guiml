@@ -150,6 +150,18 @@ class Canvas(Injectable):
   def draw(self):
     self.on_draw(self.context)
 
+@injectable("window")
+class MouseControl(Injectable):
+  def on_init(self):
+    self.on_mouse_motion = Observable()
+    self.on_mouse_press = Observable()
+    self.on_mouse_release = Observable()
+    self.on_mouse_drag = Observable()
+    self.on_mouse_enter = Observable()
+    self.on_mouse_leave = Observable()
+    self.on_mouse_scroll = Observable()
+
+
 @injectable("application")
 class UILoop(Injectable):
   def on_init(self):

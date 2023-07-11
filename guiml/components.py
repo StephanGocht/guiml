@@ -4,9 +4,11 @@ import dataclasses
 import pyglet
 import cairo
 import ctypes
+
+import functools
 from pyglet import app, clock, gl, image, window
 
-from guiml.injectables import Canvas, UILoop
+from guiml.injectables import Canvas, UILoop, MouseControl
 
 class Component:
     @dataclass
@@ -112,7 +114,7 @@ class Window(Component):
     class Properties:
         width: int = 400
         height: int = 400
-        resizable: bool = True
+        resizable: bool = False
 
         top: int = 500
         left: int = 2000
@@ -121,19 +123,49 @@ class Window(Component):
     class Dependencies:
         canvas: Canvas
         ui_loop: UILoop
+        mouse_control: MouseControl
 
     def on_init(self):
         super().on_init()
         self.init_window()
         self.init_canvas()
-        self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+        self.register_mouse_events()
+
+        self._ui_loop_on_update_subscription = \
+            self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+
+    def remap_mouse_pos(self, callable, x, y, *args, **kwargs):
+        # pyglet uses bot left as origin, swapt origin to top right
+        return callable(x, self.properties.height - y, *args, **kwargs)
+
+    def register_mouse_events(self):
+        mouse_events = [
+            "on_mouse_motion",
+            "on_mouse_press",
+            "on_mouse_release",
+            "on_mouse_drag",
+            "on_mouse_enter",
+            "on_mouse_leave",
+            "on_mouse_scroll",
+        ]
+
+        args = {
+            event: functools.partial(self.remap_mouse_pos,
+                getattr(self.dependencies.mouse_control, event))
+            for event in mouse_events
+        }
+
+        self.window.push_handlers(**args)
+
+    # def on_destroy(self):
+    #     self._ui_loop_on_update_subscription.cancel()
 
     def init_window(self):
         args = {key: getattr(self.properties, key) for key in ["width", "height", "resizable"]}
         self.window = pyglet.window.Window(**args)
         self.window.set_location(self.properties.left, self.properties.top)
 
-        self.window.push_handlers("on_draw", self.on_draw)
+        self.window.push_handlers(on_draw = self.on_draw)
 
     def on_draw(self):
         self.window.clear()
@@ -206,6 +238,25 @@ class Div(DrawableComponent):
         pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
         ctx.set_source(pat)
         ctx.fill()
+
+@component("button")
+class Button(Div):
+    @dataclass
+    class Dependencies(Div.Dependencies):
+        mouse_control: MouseControl
+
+    def on_init(self):
+        super().on_init()
+        on_mouse_release = self.dependencies.mouse_control.on_mouse_release
+        subscription = on_mouse_release.subscribe(self.on_mouse_release)
+        self._on_mouse_release_subscription = subscription
+
+    def on_destroy(self):
+        self._on_mouse_release_subscription.cancel()
+
+    def on_mouse_release(self, x, y, button, modifiers):
+        print(x, y)
+
 
 def get_extent(text, font_size):
     fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
