@@ -117,30 +117,44 @@ class Injector:
     return self.injectables[key]
 
 
+class Subscription:
+  def __init__(self, observable, callback):
+    self.observable = observable
+    self.callback = callback
+
+  def cancel(self):
+    self.observable.unsubscribe(self.callback)
+
+class Observable:
+  def __init__(self):
+    self.callbacks = list()
+
+  def __call__(self, *args, **kwargs):
+    for callback in self.callbacks:
+      callback(*args, **kwargs)
+
+  def subscribe(self, callback):
+    self.callbacks.append(callback)
+    return Subscription(self, callback)
+
+  def unsubscribe(self, callback):
+    self.callbacks.remove(callback)
+
 @injectable("window")
 class Canvas(Injectable):
   def on_init(self):
     # context will be created and set by the window component
     self.context = None
-    self.drawables = list()
-
-  def add_drawable(self, drawable):
-    self.drawables.append(drawable)
-
-  def remove_drawable(self, drawable):
-    self.drawables.remove(drawable)
+    self.on_draw = Observable()
 
   def draw(self):
-    for drawable in self.drawables:
-      drawable.draw(self.context)
-
+    self.on_draw(self.context)
 
 @injectable("application")
 class UILoop(Injectable):
   def on_init(self):
-    clock.schedule_interval(self.on_update, 0.1)
-    self.update_listener = list()
+    clock.schedule_interval(self._update, 0.1)
+    self.on_update = Observable()
 
-  def on_update(self, dt):
-    for listener in self.update_listener:
-      listener(dt)
+  def _update(self, dt):
+    self.on_update(dt)

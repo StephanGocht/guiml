@@ -72,6 +72,7 @@ class ComponentManager:
 
     def __init__(self, root_markup):
         self.window = None
+        self.components = {}
 
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
@@ -87,7 +88,11 @@ class ComponentManager:
 
     def on_init(self):
         # called when application tag is encountered
-        self.dependencies.ui_loop.update_listener.append(self.on_update)
+        self._update_subscription = self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+
+    def on_destroy(self):
+        # todo: This needs to be called!
+        self._update_subscription.cancel()
 
 
     def collect_properties(self, node):
@@ -171,6 +176,9 @@ class ComponentManager:
 
     def do_update(self):
         tree = copy.deepcopy(self.tree)
+
+        for component in self.components.values():
+            component.on_destroy()
 
         self.components = dict()
 

@@ -20,14 +20,29 @@ class Component:
     def __init__(self, properties, dependencies):
         self.properties = properties
         self.dependencies = dependencies
-
         self.on_init()
 
     def on_init(self):
         pass
 
-    def draw(self, ctx):
+    def on_destroy(self):
         pass
+
+class DrawableComponent(Component):
+    @dataclass
+    class Dependencies:
+        canvas: Canvas
+
+    def on_init(self):
+        super().on_init()
+        self._canvas_on_draw_subscription = self.dependencies.canvas.on_draw.subscribe(self.on_draw)
+
+    def on_draw(self, context):
+        pass
+
+    def on_destroy(self):
+        self._canvas_on_draw_subscription.cancel()
+        super().on_destroy()
 
 _components = {}
 
@@ -111,7 +126,7 @@ class Window(Component):
         super().on_init()
         self.init_window()
         self.init_canvas()
-        self.dependencies.ui_loop.update_listener.append(self.on_update)
+        self.dependencies.ui_loop.on_update.subscribe(self.on_update)
 
     def init_window(self):
         args = {key: getattr(self.properties, key) for key in ["width", "height", "resizable"]}
@@ -163,7 +178,7 @@ class WidgetProperty:
     layout: str = ""
 
 @component("div")
-class Div(Component):
+class Div(DrawableComponent):
     @dataclass
     class Properties(WidgetProperty):
         border: Border = field(default_factory = Border)
@@ -171,7 +186,7 @@ class Div(Component):
         padding: Rectangle = field(default_factory = Rectangle)
         background: Color = field(default_factory = Color)
 
-    def draw(self, ctx):
+    def on_draw(self, ctx):
         ctx.new_path()
 
         bwidth = self.properties.border.width / 2
@@ -204,7 +219,7 @@ def get_extent(text, font_size):
 
 
 @component("text")
-class Text(Component):
+class Text(DrawableComponent):
     @dataclass
     class Properties(WidgetProperty):
         font_size: int = 14
@@ -220,7 +235,7 @@ class Text(Component):
     def height(self):
         return self.properties.font_size
 
-    def draw(self, ctx):
+    def on_draw(self, ctx):
         color = self.properties.color
         ctx.set_source_rgb(color.red, color.green, color.blue)
         ctx.set_font_size(self.properties.font_size)
