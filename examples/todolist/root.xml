@@ -1,7 +1,7 @@
 <application>
   <window>
     <div class="background">
-      <!--<button id="caption" class="text">Click Me!</button>-->
+      <button id="caption" class="text">Click Me!</button>
       <div id="todo_mark" control="if 3 > 4">Nothing to do!</div>
       <todolist id="todolist"></todolist>
     </div>

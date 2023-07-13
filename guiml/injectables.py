@@ -98,7 +98,8 @@ class Injector:
   def add_tag(self, tag):
     to_add = DependencyResolver(_injectables[tag])
     for injectable in to_add:
-      self.injectables[injectable] = injectable(self.get_dependencies(injectable))
+      if injectable not in self.injectables:
+        self.injectables[injectable] = injectable(self.get_dependencies(injectable))
 
   def get_dependencies(self, class_with_dependencies):
       args = {}

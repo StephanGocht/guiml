@@ -73,6 +73,7 @@ class ComponentManager:
     def __init__(self, root_markup):
         self.window = None
         self.components = {}
+        self.dependencies = None
 
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
@@ -87,7 +88,8 @@ class ComponentManager:
 
 
     def on_init(self):
-        # called when application tag is encountered
+        # on_init is called when application tag is encountered
+
         self._update_subscription = self.dependencies.ui_loop.on_update.subscribe(self.on_update)
 
     def on_destroy(self):
@@ -141,7 +143,7 @@ class ComponentManager:
         component = None
 
         self.injector.add_tag(node.tag)
-        if node.tag == "application":
+        if node.tag == "application" and self.dependencies is None:
             self.dependencies = self.injector.get_dependencies(self)
             self.on_init()
 
@@ -243,79 +245,3 @@ class ComponentManager:
 
         if component:
             parents.pop()
-
-
-class GUI:
-    @dataclass
-    class Properties:
-        width: int = 400
-        height: int = 400
-
-    def __init__(self, window, properties, components):
-        self.properties = properties
-
-        self.components = components
-
-        width = self.properties.width
-        height = self.properties.height
-
-        # Create texture backed by ImageSurface
-        self.surface_data = (ctypes.c_ubyte * (width * height * 4))()
-        surface = cairo.ImageSurface.create_for_data(self.surface_data, cairo.FORMAT_ARGB32, width, height, width * 4);
-        self.texture = image.Texture.create(width, height, gl.GL_TEXTURE_2D, gl.GL_RGBA)
-        self.texture.tex_coords = (0, 1, 0) + (1, 1, 0) + (1, 0, 0) + (0, 0, 0)
-
-        self.ctx = cairo.Context(surface)
-
-        self.update(0)
-        window.push_handlers("on_draw", self.on_draw)
-
-        clock.schedule_interval(self.update, 0.1)
-
-    def on_draw(self):
-        # draw the texture
-        self.texture.blit(0, 0)
-
-    def clear(self):
-        self.ctx.set_operator(cairo.Operator.CLEAR)
-        self.ctx.rectangle(0, 0, self.properties.width, self.properties.height)
-        self.ctx.fill()
-
-        self.ctx.set_operator(cairo.Operator.OVER)
-
-    def update(self, dt):
-        self.clear()
-
-        self.components.update()
-
-        for component in self.components:
-            component.draw(self.ctx)
-
-        # Update texture from sruface data
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
-            self.properties.width, self.properties.height, 0, gl.GL_BGRA,
-            gl.GL_UNSIGNED_BYTE, self.surface_data)
-
-
-class Window:
-    def __init__(self, root_markup):
-        # todo: window settings should be read from the xml!
-        self.window = window.Window(width = 400, height = 400, resizable = True)
-        self.window.set_location(2000, 500)
-        self.root_markup = root_markup
-
-    def on_draw(self):
-        self.window.clear()
-
-    def add(self, tag):
-        pass
-
-    def run(self):
-        manager = ComponentManager(self.root_markup)
-
-        gui = GUI(self.window, GUI.Properties(), manager)
-
-        # run on draw first, i.e., push it as last handler
-        self.window.push_handlers("on_draw", self.on_draw)
-        app.run()
