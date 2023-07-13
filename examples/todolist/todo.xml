@@ -1,3 +1,6 @@
 <template>
-  <div>{{self.text}}</div>
+  <todolist id="todolist" py_todos="self.todos"></todolist>
+  <button id="add_button" on_click="self.add_clicked">
+    <text py_text="f'add todo #{len(self.todos)}'"></text>
+  </button>
 </template>

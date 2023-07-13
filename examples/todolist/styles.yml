@@ -11,14 +11,38 @@
     alpha: 1.
 
   layout: grid
-  rows: 3
+  rows: 1
   cols: 1
 
-$caption:
+todo:
+  layout: grid
+  rows: 2
+  cols: 1
+
+$add_button:
+  row: 1
+  col: 0
   layout: hflow
 
-  col: 0
-  row: 0
+  border:
+    width: 1
+    color:
+      red: 0
+      green: 0
+      blue: 0
+      alpha: 1
+
+  margin:
+    top: 2
+    left: 2
+    right: 2
+    bottom: 2
+
+  padding:
+    top: 2
+    left: 2
+    right: 2
+    bottom: 2
 
 $todo_mark:
   layout: hflow
@@ -28,7 +52,7 @@ $todo_mark:
 
 $todolist:
   col: 0
-  row: 2
+  row: 0
 
   layout: grid
   rows: 1

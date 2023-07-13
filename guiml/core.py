@@ -8,6 +8,7 @@ import dataclasses
 from pyglet import app, clock, gl, image, window
 import os
 
+import typing
 
 from guiml.filecache import StyleLoader, MarkupLoader
 
@@ -136,6 +137,7 @@ class ComponentManager:
                 property_classes.append(layout_parent_cls.ChildProperties)
 
         converter = make_converter()
+        converter.register_structure_hook(typing.Callable, lambda val, type: val)
         property_class = dataclass(type("Properties", tuple(property_classes), dict()))
         return converter.structure(data, property_class)
 
@@ -173,8 +175,8 @@ class ComponentManager:
         needUpdate |= self.style_loader.reload()
         needUpdate |= self.markup_loader.reload()
 
-        if needUpdate:
-            self.do_update()
+        # if needUpdate:
+        self.do_update()
 
     def do_update(self):
         tree = copy.deepcopy(self.tree)

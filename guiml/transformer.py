@@ -126,14 +126,15 @@ class ControlTransformer:
 
         for key in node.keys():
             if key.startswith("py_") or key.startswith("on_"):
-                modified = True
                 value = node.get(key)
-                del_atribute(node, key)
-                new_value = eval(value, None, context)
+                if isinstance(value, str):
+                    modified = True
+                    del_atribute(node, key)
+                    new_value = eval(value, None, context)
 
-                if key.startswith("py_"):
-                    key = key[3:]
-                node.set(key, new_value)
+                    if key.startswith("py_"):
+                        key = key[3:]
+                    node.set(key, new_value)
 
         return modified
 

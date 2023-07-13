@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Type, Optional
+from typing import Type, Optional, Callable
 import dataclasses
 import pyglet
 import cairo
@@ -242,6 +242,10 @@ class Div(DrawableComponent):
 @component("button")
 class Button(Div):
     @dataclass
+    class Properties(Div.Properties):
+        on_click: Optional[Callable] = None
+
+    @dataclass
     class Dependencies(Div.Dependencies):
         mouse_control: MouseControl
 
@@ -255,7 +259,10 @@ class Button(Div):
         self._on_mouse_release_subscription.cancel()
 
     def on_mouse_release(self, x, y, button, modifiers):
-        print(x, y)
+        position = self.properties.position
+        if position.left <= x and x <= position.right and position.top <= y and y <= position.bottom:
+            if self.properties.on_click:
+                self.properties.on_click()
 
 
 def get_extent(text, font_size):
