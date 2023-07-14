@@ -21,6 +21,12 @@ class Todo(Component):
   class Properties(WidgetProperty):
     pass
 
+  def on_init(self):
+    print("init todo")
+
+  def on_destroy(self):
+    print("destroy todo")
+
   @property
   def todos(self):
     return self.dependencies.todo_service.todos
@@ -29,4 +35,3 @@ class Todo(Component):
   def add_clicked(self):
     todos = self.dependencies.todo_service.todos
     todos.append("todo %i"%(len(todos)))
-    print(todos)
