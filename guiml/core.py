@@ -9,6 +9,7 @@ from pyglet import app, clock, gl, image, window
 import os
 
 import typing
+from typing import Optional
 
 from collections import defaultdict, namedtuple
 
@@ -60,7 +61,130 @@ def merge_data(a, b):
 
 NodeComponentPair = namedtuple("NodeComponentPair", "node component")
 
-class ComponentManager:
+class PersistationStrategy:
+    def store(self, children, payloads):
+        pass
+
+    def load(self, children):
+        pass
+
+    def __iter__(self):
+        pass
+
+class OrderPersistation:
+    def __init__(self):
+        self.storage = dict()
+
+    def sibling_number(self, children):
+        sibling_counter = defaultdict(int)
+        for child in children:
+            number = sibling_counter[child.tag]
+            yield number
+            sibling_counter[child.tag] = number + 1
+
+    def save(self, children, payloads):
+        self.storage = dict()
+        for number, child, payload in zip(self.sibling_number(children), children, payloads):
+            self.storage[(child.tag, number)] = payload
+
+    def load(self, children):
+        for number, child in zip(self.sibling_number(children), children):
+            yield self.storage.get((child.tag, number))
+
+    def __iter__(self):
+        return iter(self.storage.values())
+
+def new_strategy_from_name(name):
+    if name != "order":
+        raise NotImplementedError()
+    return OrderPersistation()
+
+class PersistationManager():
+    STRATEGY_ATTRIBUTE = "persistation_strategy"
+
+    @dataclass
+    class Payload:
+        children: dict[str, PersistationStrategy] = field(default_factory = dict)
+        component: Optional["Component"] = None
+
+    def __init__(self):
+        self.root = None
+        self.components = dict()
+
+    def create_component(self, node, parent_nodes):
+        pass
+
+    def destroy_component(self, component):
+        pass
+
+    def on_component_restored(self, component, node, parent_nodes):
+        pass
+
+    def on_component_renewed(self, component, node, parent_nodes):
+        pass
+
+    def renew(self, root_node):
+        self.components = dict()
+        self.root = self.traverse(root_node, self.root, [])
+
+    def traverse(self, node, restored_data, parent_nodes):
+        if restored_data is None:
+            restored_data = self.Payload()
+
+        component = restored_data.component
+        if component is None:
+            component = self.create_component(node, parent_nodes)
+        else:
+            self.on_component_restored(component, node, parent_nodes)
+        self.on_component_renewed(component, node, parent_nodes)
+        self.components[node] = component
+
+        childs_by_strategy = defaultdict(list)
+        for child in node:
+            childs_by_strategy[child.get(self.STRATEGY_ATTRIBUTE, "order")].append(child)
+
+        restored_childs = dict()
+        for key, children in childs_by_strategy.items():
+            strategy = restored_data.children.get(key)
+            if strategy:
+
+                maintained = set()
+                for child, data in zip(children, strategy.load(children)):
+                    restored_childs[child] = data
+                    if data is not None:
+                        maintained.add(id(data.component))
+
+                for data in strategy:
+                    if data.component is not None and id(data.component) not in maintained:
+                        self.destroy_component(data.component)
+
+            else:
+                for child in children:
+                    restored_childs[child] = None
+
+        parent_nodes.append(node)
+
+        child_data = dict()
+        for child in node:
+            data = self.traverse(child, restored_childs[child], parent_nodes)
+            child_data[child] = data
+
+        parent_nodes.pop()
+
+        saved_data = self.Payload()
+        saved_data.component = component
+
+        for key, children in childs_by_strategy.items():
+            strategy = new_strategy_from_name(key)
+            strategy.save(children, [child_data[child] for child in children])
+            saved_data.children[key] = strategy
+
+        return saved_data
+
+    def __iter__(self):
+        pass
+
+class ComponentManager(PersistationManager):
     @dataclass
     class Dependencies:
         ui_loop: UILoop
@@ -76,11 +200,8 @@ class ComponentManager:
     PERSISTANCE_KEY_ATTRIBUTE = "persistance_key"
 
     def __init__(self, root_markup):
-        self.window = None
-        self.components = {}
+        super().__init__()
         self.dependencies = None
-
-        self.component_store = dict()
 
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
@@ -93,7 +214,6 @@ class ComponentManager:
 
         self.do_update()
 
-
     def on_init(self):
         # on_init is called when application tag is encountered
 
@@ -101,7 +221,6 @@ class ComponentManager:
 
     def on_destroy(self):
         self._update_subscription.cancel()
-
 
     def collect_properties(self, node):
         data = {}
@@ -138,8 +257,8 @@ class ComponentManager:
         if parents:
             layout_parent_cls = None
             for parent in reversed(parents):
-                if parent.component:
-                    layout_parent_cls = getattr(parents[-1].component.properties, "layout", None)
+                if self.components[parent]:
+                    layout_parent_cls = getattr(self.components[parents[-1]].properties, "layout", None)
                     break
 
             if layout_parent_cls:
@@ -153,33 +272,35 @@ class ComponentManager:
         return properties
 
 
-    def mk_component(self, node, parents):
+    def create_component(self, node, parent_nodes):
         component = None
 
-        persistance_key = node.get(self.PERSISTANCE_KEY_ATTRIBUTE)
-        stored_component = self.component_store.get(persistance_key)
+        self.injector.add_tag(node.tag)
+        if node.tag == "application" and self.dependencies is None:
+            print("create application")
+            self.dependencies = self.injector.get_dependencies(self)
+            self.on_init()
 
-        if stored_component:
-            component = stored_component
+        if node.tag in _components:
+            print("create", node.tag)
+            component_cls = _components[node.tag].component_class
+            properties = self.make_properties(component_cls, node, parent_nodes)
+            dependencies = self.injector.get_dependencies(component_cls)
+            component = component_cls(properties, dependencies)
 
-            # todo: do we really want to overwrite the properties every time?
-            # note: cattrs copies leaf attributes such as lists. This cause
-            # not overwriting properties to not work as intended.
-            component.properties = self.make_properties(type(component), node, parents)
-        else:
-            self.injector.add_tag(node.tag)
-            if node.tag == "application" and self.dependencies is None:
-                self.dependencies = self.injector.get_dependencies(self)
-                self.on_init()
-
-            if node.tag in _components:
-                component_cls = _components[node.tag].component_class
-                properties = self.make_properties(component_cls, node, parents)
-                dependencies = self.injector.get_dependencies(component_cls)
-                component = component_cls(properties, dependencies)
-
-        self.dynamic_dom.update(node, component)
         return component
+
+    def destroy_component(self, component):
+        component.on_destroy()
+
+    def on_component_restored(self, component, node, parent_nodes):
+        # todo: do we really want to overwrite the properties every time?
+        # note: cattrs copies leaf attributes such as lists. This cause
+        # not overwriting properties to not work as intended.
+        component.properties = self.make_properties(type(component), node, parent_nodes)
+
+    def on_component_renewed(self, component, node, parent_nodes):
+        self.dynamic_dom.update(node, component)
 
     def __iter__(self):
         return iter(self.components.values())
@@ -196,24 +317,11 @@ class ComponentManager:
         tree = copy.deepcopy(self.tree)
 
         self.components = dict()
-        self.make_components(tree.getroot(), [])
-        self.update_component_store()
+        self.renew(tree.getroot())
 
         self.layout(tree.getroot(), [])
 
         # self.dump_tree(tree.getroot())
-
-    def update_component_store(self):
-        old_store = self.component_store
-        self.component_store = dict()
-
-        for node, component in self.components.items():
-            self.component_store[node.get(self.PERSISTANCE_KEY_ATTRIBUTE)] = component
-
-        for key, component in old_store.items():
-            if key not in self.component_store:
-                component.on_destroy()
-
 
     def dump_tree(self, node):
         stack = list()
@@ -231,33 +339,6 @@ class ComponentManager:
             else:
                 indent -= 1
                 print("  " * indent, "</%s>"%(stack.pop()))
-
-    def add_persistance_key(self, node, parents, sibling_count = 0):
-        if not parents:
-            key = "/"
-        else:
-            key = parents[-1].node.get(self.PERSISTANCE_KEY_ATTRIBUTE) + "/"
-
-        key += "%s[%i]"%(node.tag, sibling_count)
-
-        node.set(self.PERSISTANCE_KEY_ATTRIBUTE, key)
-
-
-    def make_components(self, node, parents, sibling_count = 0):
-        self.add_persistance_key(node, parents, sibling_count)
-        component = self.mk_component(node, parents)
-        if component:
-            self.components[node] = component
-
-        parents.append(NodeComponentPair(node, component))
-
-        sibling_counter = defaultdict(int)
-        for child in node:
-            sibling_count = sibling_counter[child.tag]
-            self.make_components(child, parents, sibling_count)
-            sibling_counter[child.tag] = sibling_count + 1
-
-        parents.pop()
 
     def layout(self, node, parents):
         component = self.components.get(node)
