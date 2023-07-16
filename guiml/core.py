@@ -9,7 +9,7 @@ from pyglet import app, clock, gl, image, window
 import os
 
 import typing
-from typing import Optional
+from typing import Optional, Any
 
 from collections import defaultdict, namedtuple
 
@@ -103,41 +103,38 @@ class PersistationManager():
     STRATEGY_ATTRIBUTE = "persistation_strategy"
 
     @dataclass
-    class Payload:
+    class DataNode:
         children: dict[str, PersistationStrategy] = field(default_factory = dict)
-        component: Optional["Component"] = None
+        data: Any = None
 
     def __init__(self):
         self.root = None
-        self.components = dict()
 
-    def create_component(self, node, parent_nodes):
+    def create_data(self, node, parent_nodes):
         pass
 
-    def destroy_component(self, component):
+    def destroy_data(self, data):
         pass
 
-    def on_component_restored(self, component, node, parent_nodes):
+    def on_data_restored(self, data, node, parent_nodes):
         pass
 
-    def on_component_renewed(self, component, node, parent_nodes):
+    def on_data_renewed(self, data, node, parent_nodes):
         pass
 
     def renew(self, root_node):
-        self.components = dict()
         self.root = self.traverse(root_node, self.root, [])
 
     def traverse(self, node, restored_data, parent_nodes):
         if restored_data is None:
-            restored_data = self.Payload()
+            restored_data = self.DataNode()
 
-        component = restored_data.component
-        if component is None:
-            component = self.create_component(node, parent_nodes)
+        data = restored_data.data
+        if data is None:
+            data = self.create_data(node, parent_nodes)
         else:
-            self.on_component_restored(component, node, parent_nodes)
-        self.on_component_renewed(component, node, parent_nodes)
-        self.components[node] = component
+            self.on_data_restored(data, node, parent_nodes)
+        self.on_data_renewed(data, node, parent_nodes)
 
         childs_by_strategy = defaultdict(list)
         for child in node:
@@ -149,14 +146,14 @@ class PersistationManager():
             if strategy:
 
                 maintained = set()
-                for child, data in zip(children, strategy.load(children)):
-                    restored_childs[child] = data
-                    if data is not None:
-                        maintained.add(id(data.component))
+                for child, data_node in zip(children, strategy.load(children)):
+                    restored_childs[child] = data_node
+                    if data_node is not None:
+                        maintained.add(id(data_node.data))
 
-                for data in strategy:
-                    if data.component is not None and id(data.component) not in maintained:
-                        self.destroy_component(data.component)
+                for data_node in strategy:
+                    if data_node.data is not None and id(data_node.data) not in maintained:
+                        self.destroy_data(data_node.data)
 
             else:
                 for child in children:
@@ -166,13 +163,13 @@ class PersistationManager():
 
         child_data = dict()
         for child in node:
-            data = self.traverse(child, restored_childs[child], parent_nodes)
-            child_data[child] = data
+            data_node = self.traverse(child, restored_childs[child], parent_nodes)
+            child_data[child] = data_node
 
         parent_nodes.pop()
 
-        saved_data = self.Payload()
-        saved_data.component = component
+        saved_data = self.DataNode()
+        saved_data.data = data
 
         for key, children in childs_by_strategy.items():
             strategy = new_strategy_from_name(key)
@@ -183,6 +180,17 @@ class PersistationManager():
 
     def __iter__(self):
         pass
+
+@dataclass
+class NodeObjects:
+    component: "Optional[Component]" = None
+    injectables: Optional[dict] = None
+
+    def on_destroy(self):
+        component.on_destroy()
+        for injectable in injectables.items():
+            injectable.on_destroy()
+
 
 class ComponentManager(PersistationManager):
     @dataclass
@@ -202,6 +210,7 @@ class ComponentManager(PersistationManager):
     def __init__(self, root_markup):
         super().__init__()
         self.dependencies = None
+        self.node_data = dict()
 
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
@@ -257,8 +266,9 @@ class ComponentManager(PersistationManager):
         if parents:
             layout_parent_cls = None
             for parent in reversed(parents):
-                if self.components[parent]:
-                    layout_parent_cls = getattr(self.components[parents[-1]].properties, "layout", None)
+                parent_component = self.node_data[parent].component
+                if parent_component:
+                    layout_parent_cls = getattr(parent_component.properties, "layout", None)
                     break
 
             if layout_parent_cls:
@@ -272,7 +282,9 @@ class ComponentManager(PersistationManager):
         return properties
 
 
-    def create_component(self, node, parent_nodes):
+    def create_data(self, node, parent_nodes):
+        result = NodeObjects()
+
         component = None
 
         self.injector.add_tag(node.tag)
@@ -288,22 +300,22 @@ class ComponentManager(PersistationManager):
             dependencies = self.injector.get_dependencies(component_cls)
             component = component_cls(properties, dependencies)
 
-        return component
+        result.component = component
+        return result
 
-    def destroy_component(self, component):
-        component.on_destroy()
+    def destroy_data(self, data):
+        data.on_destroy()
 
-    def on_component_restored(self, component, node, parent_nodes):
-        # todo: do we really want to overwrite the properties every time?
-        # note: cattrs copies leaf attributes such as lists. This cause
-        # not overwriting properties to not work as intended.
-        component.properties = self.make_properties(type(component), node, parent_nodes)
+    def on_data_restored(self, data, node, parent_nodes):
+        if data.component:
+            # todo: do we really want to overwrite the properties every time?
+            # note: cattrs copies leaf attributes such as lists. This cause
+            # not overwriting properties to not work as intended.
+            data.component.properties = self.make_properties(type(data.component), node, parent_nodes)
 
-    def on_component_renewed(self, component, node, parent_nodes):
-        self.dynamic_dom.update(node, component)
-
-    def __iter__(self):
-        return iter(self.components.values())
+    def on_data_renewed(self, data, node, parent_nodes):
+        self.node_data[node] = data
+        self.dynamic_dom.update(node, data.component)
 
     def on_update(self, dt):
         needUpdate = False
@@ -316,7 +328,7 @@ class ComponentManager(PersistationManager):
     def do_update(self):
         tree = copy.deepcopy(self.tree)
 
-        self.components = dict()
+        self.node_data = dict()
         self.renew(tree.getroot())
 
         self.layout(tree.getroot(), [])
@@ -328,9 +340,10 @@ class ComponentManager(PersistationManager):
         indent = 0
         for node in tree_dfs(node):
             if node is not None:
-                component = self.components.get(node)
+                data = self.node_data.get(node)
                 print("  " * indent, "<%s>"%(node.tag))
-                if component:
+                if data and data.component:
+                    component = data.component
                     for field in dataclasses.fields(component.properties):
                         print("  " * (indent + 2), "%s: %s"%(field.name, getattr(component.properties, field.name)))
 
@@ -341,8 +354,10 @@ class ComponentManager(PersistationManager):
                 print("  " * indent, "</%s>"%(stack.pop()))
 
     def layout(self, node, parents):
-        component = self.components.get(node)
+        data = self.node_data.get(node)
+        component = data.component if data else None
         if component:
+            component = data.component
             layout_cls = getattr(component.properties, "layout", None)
             if layout_cls:
                 layout_cls = _layouts[layout_cls]
@@ -350,9 +365,9 @@ class ComponentManager(PersistationManager):
 
                 childs = list()
                 for child in node:
-                    child_component = self.components.get(child)
-                    if child_component:
-                        childs.append(child_component)
+                    child_data = self.node_data.get(child)
+                    if child_data and child_data.component:
+                        childs.append(child_data.component)
 
                 layouter.layout(childs)
 
