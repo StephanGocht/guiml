@@ -214,7 +214,6 @@ class ComponentManager(PersistationManager):
 
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
-        self.injector = Injector()
         self.dynamic_dom = DynamicDOM([
                 TemplatesTransformer(),
                 ControlTransformer(),
@@ -287,17 +286,17 @@ class ComponentManager(PersistationManager):
 
         component = None
 
-        self.injector.add_tag(node.tag)
+
+        injector = Injector([self.node_data[parent].injectables for parent in parent_nodes])
+        result.injectables = injector.add_tag(node.tag)
         if node.tag == "application" and self.dependencies is None:
-            print("create application")
-            self.dependencies = self.injector.get_dependencies(self)
+            self.dependencies = injector.get_dependencies(self)
             self.on_init()
 
         if node.tag in _components:
-            print("create", node.tag)
             component_cls = _components[node.tag].component_class
             properties = self.make_properties(component_cls, node, parent_nodes)
-            dependencies = self.injector.get_dependencies(component_cls)
+            dependencies = injector.get_dependencies(component_cls)
             component = component_cls(properties, dependencies)
 
         result.component = component

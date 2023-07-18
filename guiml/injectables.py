@@ -91,20 +91,25 @@ class DependencyResolver:
     return iter( (node.injectable for node in dag_order) )
 
 class Injector:
-  def __init__(self):
-    # dict mapping injectable classes to its instance
-    self.injectables = {}
+  def __init__(self, injectables):
+    # list of dicts mapping injectable classes to its instance
+    self.injectables = injectables
 
   def add_tag(self, tag):
+    result = dict()
+
     to_add = DependencyResolver(_injectables[tag])
     for injectable in to_add:
-      if injectable not in self.injectables:
-        self.injectables[injectable] = injectable(self.get_dependencies(injectable))
+      if injectable not in self:
+        result[injectable] = injectable(self.get_dependencies(injectable))
+
+    self.injectables.append(result)
+    return result
 
   def get_dependencies(self, class_with_dependencies):
       args = {}
       for field_name, field_type in get_dependencies(class_with_dependencies, with_name = True):
-        args[field_name] = self.injectables[field_type]
+        args[field_name] = self[field_type]
 
       return get_dependency_class(class_with_dependencies)(**args)
 
@@ -114,8 +119,20 @@ class Injector:
   def copy(self):
     pass
 
+  def __contains__(self, key):
+    for layer in reversed(self.injectables):
+      if key in layer:
+        return True
+    return False
+
   def __getitem__(self, key):
-    return self.injectables[key]
+    for layer in reversed(self.injectables):
+      try:
+        return layer[key]
+      except KeyError:
+        pass
+
+    raise KeyError(key)
 
 
 class Subscription:
