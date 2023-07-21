@@ -131,6 +131,8 @@ class Window(Component):
         self.init_canvas()
         self.register_mouse_events()
 
+        self.fps_display = pyglet.window.FPSDisplay(window=self.window)
+
         self._ui_loop_on_update_subscription = \
             self.dependencies.ui_loop.on_update.subscribe(self.on_update)
 
@@ -162,6 +164,7 @@ class Window(Component):
 
     def init_window(self):
         args = {key: getattr(self.properties, key) for key in ["width", "height", "resizable"]}
+        args["vsync"] = False
         self.window = pyglet.window.Window(**args)
         self.window.set_location(self.properties.left, self.properties.top)
 
@@ -171,6 +174,7 @@ class Window(Component):
         self.window.clear()
         # draw the texture
         self.texture.blit(0, 0)
+        self.fps_display.draw()
 
     def init_canvas(self):
         width = self.properties.width

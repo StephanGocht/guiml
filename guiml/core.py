@@ -191,6 +191,36 @@ class NodeObjects:
         for injectable in injectables.items():
             injectable.on_destroy()
 
+def structure(data, data_type):
+    if isinstance(data, data_type):
+        return data
+    elif dataclasses.is_dataclass(data_type):
+        args = dict()
+        for field in dataclasses.fields(data_type):
+            try:
+                value = data[field.name]
+            except KeyError:
+                pass
+            else:
+                origin = typing.get_origin(field.type)
+                if origin is not None:
+                    type_args = typing.get_args(field.type)
+                    if origin is typing.Union:
+                        if len(type_args) == 2 and type(None) in type_args:
+                            if value is None:
+                                args[field.name] = value
+                            else:
+                                field_type = next(iter( (t for t in type_args if t is not type(None)) ))
+                                args[field.name] = structure(value, field_type)
+                        else:
+                            args[field.name] = value
+                else:
+                    args[field.name] = structure(value, field.type)
+
+
+        return data_type(**args)
+    else:
+        return data_type(data)
 
 class ComponentManager(PersistationManager):
     @dataclass
@@ -274,10 +304,8 @@ class ComponentManager(PersistationManager):
                 layout_parent_cls = _layouts[layout_parent_cls]
                 property_classes.append(layout_parent_cls.ChildProperties)
 
-        converter = make_converter()
-        converter.register_structure_hook(typing.Callable, lambda val, type: val)
         property_class = dataclass(type("Properties", tuple(property_classes), dict()))
-        properties = converter.structure(data, property_class)
+        properties = structure(data, property_class)
         return properties
 
 
@@ -311,6 +339,7 @@ class ComponentManager(PersistationManager):
             # note: cattrs copies leaf attributes such as lists. This cause
             # not overwriting properties to not work as intended.
             data.component.properties = self.make_properties(type(data.component), node, parent_nodes)
+            #pass
 
     def on_data_renewed(self, data, node, parent_nodes):
         self.node_data[node] = data
