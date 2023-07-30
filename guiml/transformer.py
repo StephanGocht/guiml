@@ -113,6 +113,16 @@ class ControlTransformer:
     CONTEXT_ATTRIBUTE = "_context"
     CLEAR_CONTEXT_ATTRIBUTE = "_clear_context"
 
+    def __init__(self):
+        self.getter = lambda value, context: lambda: eval(value, None, context)
+
+        def setter(value, context):
+            def set(x):
+                context["_guiml_bind_value"] = x
+                exec("{value} = _guiml_bind_value", None, context)
+        self.setter = setter
+
+
     def eval_if(self, control, context):
         return eval("bool(%s)"%(control[2:]), None, context)
 
@@ -135,6 +145,19 @@ class ControlTransformer:
                     if key.startswith("py_"):
                         key = key[3:]
                     node.set(key, new_value)
+            elif key.startswith("bind_"):
+                value = node.get(key)
+
+                if isinstance(value, str):
+                    modified = True
+                    del_atribute(node, key)
+                    key = key[5:]
+
+                    new_value = property(self.getter(value, context), self.setter(value, context))
+
+                    node.set(key, new_value)
+
+
 
         return modified
 
