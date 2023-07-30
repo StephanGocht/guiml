@@ -10,7 +10,7 @@ class TodoService(Injectable):
 
 @component(
   name = "todo",
-  template = "todo.xml"
+  template_file = "todo.xml"
 )
 class Todo(Component):
   @dataclass

@@ -4,6 +4,7 @@ import dataclasses
 import pyglet
 import cairo
 import ctypes
+import xml.etree.ElementTree as ET
 
 import functools
 from pyglet import app, clock, gl, image, window
@@ -68,10 +69,13 @@ class ComponentMetaProperties:
     component_class: Type[Component]
     name: str
     template: Optional[str] = None
+    template_file: Optional[str] = None
 
 def component(*args, **kwargs):
     def register(cls):
         component = ComponentMetaProperties(cls, *args, **kwargs)
+        if component.template:
+            component.template = ET.fromstring(component.template)
         _components[component.name] = component
         return cls
 

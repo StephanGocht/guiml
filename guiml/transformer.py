@@ -80,21 +80,35 @@ class TemplatesTransformer:
     def __init__(self):
         self.cache = FileCache()
 
+    def insert_template(self, node, template):
+        # todo add proper error message
+        assert(template.tag == "template")
+
+        attrib = node.attrib
+        node.clear()
+        node.attrib = attrib
+        node.set(self.template_marker, "True")
+        node.extend(copy.deepcopy(template))
+
+    def is_expanded(self, node):
+        return node.get(self.template_marker, False)
+
     def __call__(self, node, component):
         meta_data = _components.get(node.tag)
 
-        if meta_data and meta_data.template:
-            loader = self.cache.get(meta_data.template, MarkupLoader)
-            is_expanded = node.get(self.template_marker, False)
-            changed = loader.reload()
-            if not is_expanded or changed:
-                attrib = node.attrib
-                node.clear()
-                node.attrib = attrib
-                node.set(self.template_marker, "True")
-                node.extend(copy.deepcopy(loader.data.getroot()))
+        if meta_data:
+            if meta_data.template is not None:
+                if not self.is_expanded(node):
+                    self.insert_template(node, meta_data.template)
+                    return True
 
-                return True
+            elif meta_data.template_file:
+                loader = self.cache.get(meta_data.template_file, MarkupLoader)
+                changed = loader.reload()
+                if not self.is_expanded(node) or changed:
+                    self.insert_template(node, loader.data.getroot())
+
+                    return True
 
         return False
 
