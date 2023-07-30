@@ -192,7 +192,9 @@ class NodeObjects:
             injectable.on_destroy()
 
 def structure(data, data_type):
-    if isinstance(data, data_type):
+    if data is None:
+        return None
+    elif isinstance(data, data_type):
         return data
     elif dataclasses.is_dataclass(data_type):
         args = dict()
@@ -275,8 +277,6 @@ class ComponentManager(PersistationManager):
         tag_id = node.get("id")
         if tag_id:
             data = merge_data(data, self.style.get("$%s"%(tag_id), {}))
-
-        data["text"] = node.text
 
         data = merge_data(data, node.attrib)
 
@@ -361,7 +361,7 @@ class ComponentManager(PersistationManager):
 
         self.layout(tree.getroot(), [])
 
-        self.dump_tree(tree.getroot())
+        # self.dump_tree(tree.getroot())
 
     def dump_tree(self, node):
         stack = list()

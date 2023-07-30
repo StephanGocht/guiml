@@ -286,24 +286,35 @@ class Button(Div):
 class Input(Div):
     @dataclass
     class Properties(Div.Properties):
-        #todo: why does text not work?
-        txt: str = ""
+        text: str = None
 
     @dataclass
     class Dependencies(Div.Dependencies):
         text_control: TextControl
 
+    @property
+    def text(self):
+        if self.properties.text is not None:
+            return self.properties.text
+        else:
+            return self._text
+
+    @text.setter
+    def text(self, value):
+        if self.properties.text is not None:
+            self.properties.text = value
+        else:
+            self._text = value
+
     def on_init(self):
         super().on_init()
-        self.text = ""
-
+        self._text = ""
         on_text = self.dependencies.text_control.on_text
         subscription = on_text.subscribe(self.on_text)
         self._on_text_subscription = subscription
 
     def on_text(self, text):
         if text:
-            print(text)
             self.text += text
 
     def on_destroy(self):
