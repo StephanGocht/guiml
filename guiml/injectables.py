@@ -179,6 +179,11 @@ class MouseControl(Injectable):
     self.on_mouse_leave = Observable()
     self.on_mouse_scroll = Observable()
 
+@injectable("window")
+class TextControl(Injectable):
+  def on_init(self):
+    self.on_text = Observable()
+
 
 @injectable("application")
 class UILoop(Injectable):

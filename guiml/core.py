@@ -361,7 +361,7 @@ class ComponentManager(PersistationManager):
 
         self.layout(tree.getroot(), [])
 
-        # self.dump_tree(tree.getroot())
+        self.dump_tree(tree.getroot())
 
     def dump_tree(self, node):
         stack = list()

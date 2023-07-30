@@ -9,7 +9,8 @@ import xml.etree.ElementTree as ET
 import functools
 from pyglet import app, clock, gl, image, window
 
-from guiml.injectables import Canvas, UILoop, MouseControl
+
+from guiml.injectables import Canvas, UILoop, MouseControl, TextControl
 
 class Component:
     @dataclass
@@ -128,6 +129,8 @@ class Window(Component):
         canvas: Canvas
         ui_loop: UILoop
         mouse_control: MouseControl
+        text_control: TextControl
+
 
     def on_init(self):
         super().on_init()
@@ -143,6 +146,9 @@ class Window(Component):
     def remap_mouse_pos(self, callable, x, y, *args, **kwargs):
         # pyglet uses bot left as origin, swapt origin to top right
         return callable(x, self.properties.height - y, *args, **kwargs)
+
+    def on_text(self, text):
+        self.dependencies.text_control.on_text(text)
 
     def register_mouse_events(self):
         mouse_events = [
@@ -173,6 +179,7 @@ class Window(Component):
         self.window.set_location(self.properties.left, self.properties.top)
 
         self.window.push_handlers(on_draw = self.on_draw)
+        self.window.push_handlers(on_text = self.on_text)
 
     def on_draw(self):
         self.window.clear()
@@ -271,6 +278,37 @@ class Button(Div):
         if position.left <= x and x <= position.right and position.top <= y and y <= position.bottom:
             if self.properties.on_click:
                 self.properties.on_click()
+
+@component(
+    name = "input",
+    template = """<template><text py_text="self.text"></text></template>"""
+)
+class Input(Div):
+    @dataclass
+    class Properties(Div.Properties):
+        #todo: why does text not work?
+        txt: str = ""
+
+    @dataclass
+    class Dependencies(Div.Dependencies):
+        text_control: TextControl
+
+    def on_init(self):
+        super().on_init()
+        self.text = ""
+
+        on_text = self.dependencies.text_control.on_text
+        subscription = on_text.subscribe(self.on_text)
+        self._on_text_subscription = subscription
+
+    def on_text(self, text):
+        if text:
+            print(text)
+            self.text += text
+
+    def on_destroy(self):
+        self._on_text_subscription.cancel()
+
 
 
 def get_extent(text, font_size):

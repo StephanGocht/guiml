@@ -16,11 +16,16 @@
 
 todo:
   layout: grid
-  rows: 2
+  rows: 3
   cols: 1
 
-$add_button:
+$input_field:
   row: 1
+  col: 0
+  layout: hflow
+
+$add_button:
+  row: 2
   col: 0
   layout: hflow
 
