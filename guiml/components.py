@@ -12,6 +12,36 @@ from pyglet import app, clock, gl, image, window
 
 from guiml.injectables import Canvas, UILoop, MouseControl, TextControl
 
+@dataclass
+class Color:
+    red: float = 0.
+    green: float = 0.
+    blue: float = 0.
+    alpha: float = 0.
+
+@dataclass
+class Border:
+    width: int = 0.
+    color: Color = field(default_factory = Color)
+
+@dataclass
+class Rectangle:
+    top: int = 0
+    left: int = 0
+    bottom: int = 0
+    right: int = 0
+
+    def is_valid(self):
+        return self.left < self.right and self.top < self.bottom
+
+    @property
+    def width(self):
+        return self.right - self.left
+
+    @property
+    def height(self):
+        return self.bottom - self.right
+
 class Component:
     @dataclass
     class Properties:
@@ -32,7 +62,19 @@ class Component:
     def on_destroy(self):
         pass
 
-class DrawableComponent(Component):
+class Container(Component):
+    @dataclass
+    class Properties:
+        # bounding box for registering clicks
+        position: Rectangle = field(default_factory = Rectangle)
+        layout: str = ""
+
+    @property
+    def content_position(self):
+        return self.properties.position
+
+
+class DrawableComponent(Container):
     @dataclass
     class Dependencies:
         canvas: Canvas
@@ -81,36 +123,6 @@ def component(*args, **kwargs):
         return cls
 
     return register
-
-@dataclass
-class Color:
-    red: float = 0.
-    green: float = 0.
-    blue: float = 0.
-    alpha: float = 0.
-
-@dataclass
-class Border:
-    width: int = 0.
-    color: Color = field(default_factory = Color)
-
-@dataclass
-class Rectangle:
-    top: int = 0
-    left: int = 0
-    bottom: int = 0
-    right: int = 0
-
-    def is_valid(self):
-        return self.left < self.right and self.top < self.bottom
-
-    @property
-    def width(self):
-        return self.right - self.left
-
-    @property
-    def height(self):
-        return self.bottom - self.right
 
 
 @component("window")
@@ -217,21 +229,24 @@ class Window(Component):
             self.properties.width, self.properties.height, 0, gl.GL_BGRA,
             gl.GL_UNSIGNED_BYTE, self.surface_data)
 
-
-@dataclass
-class WidgetProperty:
-    # bounding box for registering clicks
-    position: Rectangle = field(default_factory = Rectangle)
-    layout: str = ""
-
 @component("div")
 class Div(DrawableComponent):
     @dataclass
-    class Properties(WidgetProperty):
+    class Properties(Container.Properties):
         border: Border = field(default_factory = Border)
         margin: Rectangle = field(default_factory = Rectangle)
         padding: Rectangle = field(default_factory = Rectangle)
         background: Color = field(default_factory = Color)
+
+    @property
+    def content_position(self):
+        bwidth = self.properties.border.width / 2
+        top = self.properties.position.top + self.properties.margin.top + bwidth + self.properties.padding.top
+        left = self.properties.position.left + self.properties.margin.left + bwidth + self.properties.padding.left
+        bottom = self.properties.position.bottom - self.properties.margin.bottom - bwidth - self.properties.padding.bottom
+        right = self.properties.position.right - self.properties.margin.right - bwidth - self.properties.padding.right
+
+        return Rectangle(top, left, bottom, right)
 
     def on_draw(self, ctx):
         ctx.new_path()
@@ -336,7 +351,7 @@ def get_extent(text, font_size):
 @component("text")
 class Text(DrawableComponent):
     @dataclass
-    class Properties(WidgetProperty):
+    class Properties(Container.Properties):
         font_size: int = 14
         color: Color = field(default_factory = Color)
         text: str = ""

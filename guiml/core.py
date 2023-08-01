@@ -389,7 +389,7 @@ class ComponentManager(PersistationManager):
             layout_cls = getattr(component.properties, "layout", None)
             if layout_cls:
                 layout_cls = _layouts[layout_cls]
-                layouter = layout_cls(component.properties)
+                layouter = layout_cls(component)
 
                 childs = list()
                 for child in node:

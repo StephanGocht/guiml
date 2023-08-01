@@ -1,4 +1,4 @@
-from guiml.components import component, Component, WidgetProperty
+from guiml.components import component, Component, Container
 from dataclasses import dataclass, field
 
 from guiml.injectables import Injectable, injectable
@@ -12,13 +12,13 @@ class TodoService(Injectable):
   name = "todo",
   template_file = "todo.xml"
 )
-class Todo(Component):
+class Todo(Container):
   @dataclass
   class Dependencies:
     todo_service: TodoService
 
   @dataclass
-  class Properties(WidgetProperty):
+  class Properties(Container.Properties):
     pass
 
   def on_init(self):

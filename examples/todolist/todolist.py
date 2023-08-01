@@ -1,13 +1,13 @@
-from guiml.components import component, Component, WidgetProperty
+from guiml.components import component, Component, Container
 from dataclasses import dataclass, field
 
 @component(
   name = "todolist",
   template_file = "todolist.xml"
 )
-class TodoList(Component):
+class TodoList(Container):
   @dataclass
-  class Properties(WidgetProperty):
+  class Properties(Container.Properties):
     todos: list = field(default_factory = list)
 
   @property
