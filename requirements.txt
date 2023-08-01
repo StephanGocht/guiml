@@ -1,2 +1,4 @@
 cattrs
 pyyaml
+pyglet
+pycairo
