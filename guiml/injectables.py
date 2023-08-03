@@ -183,6 +183,7 @@ class MouseControl(Injectable):
 class TextControl(Injectable):
   def on_init(self):
     self.on_text = Observable()
+    self.on_text_motion = Observable()
 
 
 @injectable("application")

@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 
 import functools
 from pyglet import app, clock, gl, image, window
+from pyglet.window import key as pyglet_key
 
 
 from guiml.injectables import Canvas, UILoop, MouseControl, TextControl
@@ -191,7 +192,8 @@ class Window(Component):
         self.window.set_location(self.properties.left, self.properties.top)
 
         self.window.push_handlers(on_draw = self.on_draw)
-        self.window.push_handlers(on_text = self.on_text)
+        self.window.push_handlers(on_text = self.dependencies.text_control.on_text)
+        self.window.push_handlers(on_text_motion = self.dependencies.text_control.on_text_motion)
 
     def on_draw(self):
         self.window.clear()
@@ -324,16 +326,27 @@ class Input(Div):
     def on_init(self):
         super().on_init()
         self._text = ""
-        on_text = self.dependencies.text_control.on_text
-        subscription = on_text.subscribe(self.on_text)
+        text_control = self.dependencies.text_control
+        subscription = text_control.on_text.subscribe(self.on_text)
         self._on_text_subscription = subscription
+        subscription = text_control.on_text_motion.subscribe(self.on_text_motion)
+        self._on_text_motion_subscription = subscription
 
     def on_text(self, text):
         if text:
             self.text += text
 
+    def on_draw(self, ctx):
+        super().on_draw(ctx)
+        # todo: draw prompt
+
+    def on_text_motion(self, motion):
+        if motion == pyglet_key.MOTION_BACKSPACE:
+            self.text = self.text[:-1]
+
     def on_destroy(self):
         self._on_text_subscription.cancel()
+        self._on_text_motion_subscription.cancel()
 
 
 
