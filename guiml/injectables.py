@@ -189,7 +189,7 @@ class TextControl(Injectable):
 @injectable("application")
 class UILoop(Injectable):
   def on_init(self):
-    clock.schedule_interval(self._update, 0.1)
+    clock.schedule_interval(self._update, 0.01)
     self.on_update = Observable()
 
   def _update(self, dt):

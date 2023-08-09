@@ -296,6 +296,16 @@ class Button(Div):
             if self.properties.on_click:
                 self.properties.on_click()
 
+def get_extent(text, font_size):
+    fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    fontMatrix = cairo.Matrix()
+    fontMatrix.scale(font_size, font_size)
+    user2device = cairo.Matrix()
+    options = cairo.FontOptions()
+
+    font = cairo.ScaledFont(fontFace, fontMatrix, user2device, options)
+    return font.text_extents(text)
+
 @component(
     name = "input",
     template = """<template><text py_text="self.text"></text></template>"""
@@ -326,6 +336,7 @@ class Input(Div):
     def on_init(self):
         super().on_init()
         self._text = ""
+        self.cursor_position = 0
         text_control = self.dependencies.text_control
         subscription = text_control.on_text.subscribe(self.on_text)
         self._on_text_subscription = subscription
@@ -334,31 +345,48 @@ class Input(Div):
 
     def on_text(self, text):
         if text:
-            self.text += text
+            self.text = self.text[:self.cursor_position] + text + self.text[self.cursor_position:]
+            self.cursor_position += len(text)
 
     def on_draw(self, ctx):
         super().on_draw(ctx)
-        # todo: draw prompt
+
+        font_size = 14
+        cursor_x_position = get_extent(self.text[:self.cursor_position], font_size).x_advance
+
+        content = self.content_position
+        cursor_width = 2
+
+        ctx.rectangle(content.left + cursor_x_position, content.top + 2, cursor_width, font_size)
+        pat = cairo.SolidPattern(0, 0, 0, 1)
+        ctx.set_source(pat)
+        ctx.fill()
 
     def on_text_motion(self, motion):
         if motion == pyglet_key.MOTION_BACKSPACE:
-            self.text = self.text[:-1]
+            if self.cursor_position > 0:
+                self.text = self.text[:self.cursor_position - 1] + self.text[self.cursor_position:]
+                self.cursor_position -= 1
+                self.cursor_position = max(self.cursor_position, 0)
+        elif motion == pyglet_key.MOTION_DELETE:
+            self.text = self.text[:self.cursor_position] + self.text[self.cursor_position + 1:]
+
+        elif motion == pyglet_key.MOTION_LEFT:
+            self.cursor_position -= 1
+            self.cursor_position = max(self.cursor_position, 0)
+        elif motion == pyglet_key.MOTION_RIGHT:
+            self.cursor_position += 1
+            self.cursor_position = min(self.cursor_position, len(self.text))
+        elif motion == pyglet_key.MOTION_BEGINNING_OF_LINE:
+            self.cursor_position = 0
+        elif motion == pyglet_key.MOTION_END_OF_LINE:
+            self.cursor_position = len(self.text)
+
+
 
     def on_destroy(self):
         self._on_text_subscription.cancel()
         self._on_text_motion_subscription.cancel()
-
-
-
-def get_extent(text, font_size):
-    fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-    fontMatrix = cairo.Matrix()
-    fontMatrix.scale(font_size, font_size)
-    user2device = cairo.Matrix()
-    options = cairo.FontOptions()
-
-    font = cairo.ScaledFont(fontFace, fontMatrix, user2device, options)
-    return font.text_extents(text)
 
 
 @component("text")
