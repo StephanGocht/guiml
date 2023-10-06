@@ -1,13 +1,5 @@
 from dataclasses import dataclass, field
-
-_layouts = {}
-
-def layout(name):
-    def register(cls):
-        _layouts[name] = cls
-        return cls
-
-    return register
+from guiml.registry import layout
 
 @layout("hflow")
 class HorizontalFlow:

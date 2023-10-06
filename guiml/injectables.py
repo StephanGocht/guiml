@@ -7,6 +7,9 @@ import typing
 
 from pyglet import clock
 
+from guiml.registry import injectable
+from guiml.registry import _injectables
+
 class Injectable:
   @dataclass
   class Dependencies:
@@ -20,20 +23,6 @@ class Injectable:
 
   def on_init(self):
     pass
-
-_injectables = defaultdict(list)
-
-def injectable(providers):
-  if isinstance(providers, str):
-    providers = [providers]
-
-  def register(cls):
-    for provider in providers:
-      _injectables[provider].append(cls)
-
-    return cls
-
-  return register
 
 class CyclicDependencyError(RuntimeError):
   pass

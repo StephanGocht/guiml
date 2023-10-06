@@ -1,7 +1,7 @@
 import copy
 import xml.etree.ElementTree as ET
 
-from guiml.components import _components
+from guiml.registry import _components
 from guiml.filecache import FileCache, MarkupLoader
 
 def del_atribute(node, attribute):

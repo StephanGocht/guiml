@@ -1,9 +1,37 @@
-from guiml.components import *
-from guiml.components import component
+# we can not use from guiml.components import ... as this would cause a cyclic import
+from guiml._components import Component
 
+from dataclasses import dataclass, field
+from typing import Optional, Callable
+from collections import namedtuple
+
+from guiml.registry import component
 from guiml.injectables import UILoop
 
 from guimlcomponents.base.injectables import *
+from guimlcomponents.base.properties import *
+
+import functools
+import pyglet
+import ctypes
+from pyglet import app, clock, gl, image, window
+from pyglet.window import key as pyglet_key
+
+# import cairo
+import cairocffi as cairo
+import pangocffi as pango
+import pangocairocffi as pangocairo
+
+class Container(Component):
+    @dataclass
+    class Properties:
+        # bounding box for registering clicks
+        position: Rectangle = field(default_factory = Rectangle)
+        layout: str = ""
+
+    @property
+    def content_position(self):
+        return self.properties.position
 
 class DrawableComponent(Container):
     @dataclass

@@ -18,9 +18,10 @@ from guiml.filecache import StyleLoader, MarkupLoader
 
 from guiml.transformer import *
 
-from guiml.components import _components
-from guiml.layout import _layouts
+from guiml.registry import _components, _layouts
 from guiml.injectables import Injector, UILoop
+
+
 
 import logging
 
@@ -28,6 +29,7 @@ import logging
 # by importing guiml plugins we trigger plugin detection and will load all
 # components
 import guiml.plugins
+import guiml.layout
 
 def tree_dfs(node):
     """
