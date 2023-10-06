@@ -22,7 +22,7 @@ class Todo(Container):
     pass
 
   def on_init(self):
-    self.text = 'Das ist ein Üäöööä text der sher komisch ist.'
+    self.text = 'Das ist ein Üäöööä text der sher komisch istx'
     print("init todo")
 
   def on_destroy(self):

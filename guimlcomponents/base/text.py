@@ -106,6 +106,8 @@ class Text(DrawableComponent, Subscriber):
 
             char_size = len(char.encode('utf-8'))
             acc += char_size
+        else:
+            return i + 1
 
         return i
 
@@ -149,7 +151,24 @@ class Text(DrawableComponent, Subscriber):
             trailing
         )
 
-        return index[0]
+        # Index is now the index of the character pressed. For positioning
+        # cursor and selection we want to move the cursor by one position if
+        # we hit the end of a character.
+        index = index[0]
+
+        pos = pango.Rectangle()
+
+        pango_c.pango_layout_index_to_pos(
+            self.get_layout().pointer,
+            index,
+            pos.pointer)
+
+        hitpos = pango.units_from_double(x - self.properties.position.left)
+        hitp = (hitpos - pos.x) / (pos.width)
+        if hitp > 0.6:
+            index += 1
+
+        return index
 
     def on_mouse_press(self, x, y, button, modifiers):
         if not self.properties.position.is_inside(x, y):
@@ -248,7 +267,7 @@ class RawInput(Text):
 
     def on_text(self, text):
         if text:
-            if self.selection_start is not None:
+            if self.has_selection():
                 self.remove_selection()
 
             self.text = self.text[:self.cursor_position] + text + self.text[self.cursor_position:]
