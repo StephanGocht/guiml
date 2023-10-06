@@ -53,6 +53,10 @@ class Container(Component):
 
 class DrawableComponent(Container):
     @dataclass
+    class Properties(Container.Properties):
+        draw_bounding_box: bool = False
+
+    @dataclass
     class Dependencies:
         canvas: Canvas
 
@@ -61,7 +65,14 @@ class DrawableComponent(Container):
         self._canvas_on_draw_subscription = self.dependencies.canvas.on_draw.subscribe(self.on_draw)
 
     def on_draw(self, context):
-        pass
+        if self.properties.draw_bounding_box:
+            with context:
+                context.new_path()
+
+                context.rectangle(self.properties.position.left, self.properties.position.top, self.properties.position.width, self.properties.position.height)
+                context.set_line_width(1)
+                context.set_source(cairo.SolidPattern(0, 1, 0, 1))
+                context.stroke()
 
     def on_destroy(self):
         self._canvas_on_draw_subscription.cancel()
@@ -70,11 +81,15 @@ class DrawableComponent(Container):
 @component("div")
 class Div(DrawableComponent):
     @dataclass
-    class Properties(Container.Properties):
+    class Properties(DrawableComponent.Properties):
         border: Border = field(default_factory = Border)
         margin: Rectangle = field(default_factory = Rectangle)
         padding: Rectangle = field(default_factory = Rectangle)
         background: Color = field(default_factory = Color)
+
+    @dataclass
+    class Dependencies(DrawableComponent.Dependencies):
+        pass
 
     @property
     def content_position(self):
@@ -87,25 +102,26 @@ class Div(DrawableComponent):
         return Rectangle(top, left, bottom, right)
 
     def on_draw(self, ctx):
-        ctx.new_path()
+        with ctx:
+            ctx.new_path()
 
-        bwidth = self.properties.border.width / 2
-        top = self.properties.position.top + self.properties.margin.top + bwidth
-        left = self.properties.position.left + self.properties.margin.left + bwidth
-        bottom = self.properties.position.bottom - self.properties.margin.bottom - bwidth
-        right = self.properties.position.right - self.properties.margin.right - bwidth
+            bwidth = self.properties.border.width / 2
+            top = self.properties.position.top + self.properties.margin.top + bwidth
+            left = self.properties.position.left + self.properties.margin.left + bwidth
+            bottom = self.properties.position.bottom - self.properties.margin.bottom - bwidth
+            right = self.properties.position.right - self.properties.margin.right - bwidth
 
-        ctx.rectangle(left, top, right - left, bottom - top)
-        ctx.set_line_width(self.properties.border.width)
-        color = self.properties.border.color
-        pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
-        ctx.set_source(pat)
-        ctx.stroke_preserve()
+            ctx.rectangle(left, top, right - left, bottom - top)
+            ctx.set_line_width(self.properties.border.width)
+            color = self.properties.border.color
+            pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
+            ctx.set_source(pat)
+            ctx.stroke_preserve()
 
-        color = self.properties.background
-        pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
-        ctx.set_source(pat)
-        ctx.fill()
+            color = self.properties.background
+            pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
+            ctx.set_source(pat)
+            ctx.fill()
 
 @component("button")
 class Button(Div):

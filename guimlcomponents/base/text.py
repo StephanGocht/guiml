@@ -62,9 +62,8 @@ def get_extent(text, font_size):
 class Input(Div):
     @dataclass
     class Properties(Div.Properties):
-        text: str = ''
+        text: str = None
         on_text: Optional[Callable] = None
-
 
     @dataclass
     class Dependencies(Div.Dependencies):
@@ -148,40 +147,12 @@ class Input(Div):
         self._on_text_motion_subscription.cancel()
 
 
-#@component("text")
-class Text(DrawableComponent):
-    @dataclass
-    class Properties(Container.Properties):
-        font_size: int = 14
-        color: Color = field(default_factory = Color)
-        text: str = ""
-
-    @property
-    def width(self):
-        extend = get_extent(self.properties.text, self.properties.font_size)
-        return extend.x_advance
-
-    @property
-    def height(self):
-        return self.properties.font_size
-
-    def on_draw(self, ctx):
-        color = self.properties.color
-        ctx.set_source_rgb(color.red, color.green, color.blue)
-        ctx.set_font_size(self.properties.font_size)
-        ctx.select_font_face("Arial",
-                             cairo.FONT_SLANT_NORMAL,
-                             cairo.FONT_WEIGHT_NORMAL)
-        ctx.move_to(self.properties.position.left, self.properties.position.top + self.height)
-        ctx.show_text(self.properties.text)
-
 @component("text")
 class Text(DrawableComponent):
     @dataclass
-    class Properties(Container.Properties):
-        font_size: int = 14
-        color: Color = field(default_factory = Color)
-        text: str = ""
+    class Properties(DrawableComponent.Properties):
+        text: str = ''
+        apply_markup: bool = True
 
     @dataclass
     class Dependencies(DrawableComponent.Dependencies):
@@ -189,7 +160,12 @@ class Text(DrawableComponent):
 
     def get_layout(self):
         layout = pango.Layout(self.dependencies.pango.context)
-        layout.apply_markup(self.properties.text)
+
+        text = self.properties.text
+        if not self.properties.apply_markup:
+            text = escape(text)
+
+        layout.apply_markup(text)
         return layout
 
     @property
@@ -206,16 +182,6 @@ class Text(DrawableComponent):
 
     def on_draw(self, context):
         super().on_draw(context)
-
-        # assert(self.properties.position.is_valid())
-
-        with context:
-            context.new_path()
-
-            context.rectangle(self.properties.position.left, self.properties.position.top, self.properties.position.width, self.properties.position.height)
-            context.set_line_width(1)
-            context.set_source(cairo.SolidPattern(0, 1, 0, 1))
-            context.stroke()
 
         with context:
             context.move_to(self.properties.position.left, self.properties.position.top)
@@ -234,4 +200,3 @@ class Text(DrawableComponent):
         # 4.2) Layout::index_to_*
         # 4.3) Layout::get_cursor_pos
         # 4.4) Layout::get_caret_pos
-
