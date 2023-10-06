@@ -40,6 +40,9 @@ class Rectangle:
     def height(self):
         return self.bottom - self.top
 
+    def is_inside(self, x, y):
+        return self.left <= x and x <= self.right and self.top <= y and y <= self.bottom
+
 class Container(Component):
     @dataclass
     class Properties:

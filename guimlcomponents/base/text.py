@@ -67,6 +67,7 @@ class Text(DrawableComponent, Subscriber):
     @dataclass
     class Dependencies(DrawableComponent.Dependencies):
         pango: PangoContext
+        mouse_control: MouseControl
 
     def on_init(self):
         super().on_init()
@@ -74,14 +75,51 @@ class Text(DrawableComponent, Subscriber):
         self.selection_start = None
         self.selection_end = None
 
+        self.subscribe('on_mouse_press', self.dependencies.mouse_control)
+        self.subscribe('on_mouse_drag', self.dependencies.mouse_control)
+
+        self.last_click_index = None
+
+
     def on_destroy(self):
         self.cancel_subscriptions()
 
-    def get_display_text(self):
+    def get_raw_text(self):
+        # todo strip text from formatting for selection to work properly
+        return self.get_input_text()
+
+    def get_input_text(self):
         return self.properties.text
 
+    def get_display_text(self):
+        # return self.get_input_text()
+        return self.add_selection(self.get_input_text())
+
+    def byte_index_to_str_index(self, index):
+        text = self.get_input_text()
+
+        acc = 0
+        i = 0
+        for i, char in enumerate(text):
+            if acc >= index:
+                break
+
+            char_size = len(char.encode('utf-8'))
+            acc += char_size
+
+        return i
+
+    def str_index_to_byte_index(self, index):
+        text = self.get_input_text()
+        return len(text[:index].encode('utf-8'))
+
+    def has_selection(self):
+        return (self.selection_start is not None
+            and self.selection_end is not None
+            and self.selection_start != self.selection_end)
+
     def add_selection(self, text):
-        if self.selection_start is not None:
+        if self.has_selection():
             start = min(self.selection_start, self.selection_end)
             stop = max(self.selection_start, self.selection_end)
 
@@ -98,6 +136,39 @@ class Text(DrawableComponent, Subscriber):
 
         layout.apply_markup(text)
         return layout
+
+    def index_from_position(self, x, y):
+        index = pango.ffi.new("int *")
+        trailing = pango.ffi.new("int *")
+
+        didhit = pango_c.pango_layout_xy_to_index(
+            self.get_layout().pointer,
+            pango.units_from_double(x - self.properties.position.left),
+            pango.units_from_double(y - self.properties.position.top),
+            index,
+            trailing
+        )
+
+        return index[0]
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if not self.properties.position.is_inside(x, y):
+            self.selection_start = None
+            self.selection_end = None
+            self.last_click_index = None
+            return
+
+        self.last_click_index = self.byte_index_to_str_index(self.index_from_position(x, y))
+        self.selection_start = self.last_click_index
+        self.selection_end = None
+
+    def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
+        if self.last_click_index is None:
+            return
+
+        self.last_click_index = self.byte_index_to_str_index(self.index_from_position(x, y))
+        if self.last_click_index is not None:
+            self.selection_end = self.last_click_index
 
     @property
     def width(self):
@@ -121,11 +192,6 @@ class Text(DrawableComponent, Subscriber):
 
             layout = self.get_layout()
             pangocairo.show_layout(context, layout)
-
-        # 4.1) Layout::xy_to_index
-        # 4.2) Layout::index_to_*
-        # 4.3) Layout::get_cursor_pos
-        # 4.4) Layout::get_caret_pos
 
 #     template = """<template><text py_text="self.escaped_text"></text></template>"""
 @component(name = "input")
@@ -153,10 +219,8 @@ class RawInput(Text):
     def on_destroy(self):
         super().on_destroy()
 
-    def get_display_text(self):
-        text = escape(self.text)
-        text = self.add_selection(text)
-        return text
+    def get_input_text(self):
+        return escape(self.text)
 
     @property
     def text(self):
@@ -203,8 +267,9 @@ class RawInput(Text):
             strong_cursor = pango.Rectangle()
             weak_cursor = pango.Rectangle()
 
+            byte_cursor = self.str_index_to_byte_index(self.cursor_position)
             pango_c.pango_layout_get_cursor_pos(
-                layout.pointer, self.cursor_position, strong_cursor.pointer, weak_cursor.pointer)
+                layout.pointer, byte_cursor, strong_cursor.pointer, weak_cursor.pointer)
 
             left = pango.units_to_double(strong_cursor.x) + self.properties.position.left
             top = pango.units_to_double(strong_cursor.y) + self.properties.position.top
@@ -234,6 +299,19 @@ class RawInput(Text):
                 motion == pyglet_key.MOTION_BACKSPACE
                 or motion == pyglet_key.MOTION_DELETE
             ))
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        super().on_mouse_press(x, y, button, modifiers)
+
+        if self.last_click_index is not None:
+            self.cursor_position = self.last_click_index
+
+    def on_mouse_drag(self, x, y, dx, dy, button, modifiers):
+        super().on_mouse_drag(x, y, dx, dy, button, modifiers)
+
+        if self.last_click_index is not None:
+            self.cursor_position = self.last_click_index
+
 
     def on_text_motion(self, motion):
         if self.is_remove_selection(motion):
