@@ -13,7 +13,6 @@ import todolist
 
 from pyglet import app
 
-
 def main():
   ComponentManager("root.xml")
   app.run(interval=1/120)

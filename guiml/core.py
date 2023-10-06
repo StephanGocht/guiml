@@ -22,6 +22,13 @@ from guiml.components import _components
 from guiml.layout import _layouts
 from guiml.injectables import Injector, UILoop
 
+import logging
+
+
+# by importing guiml plugins we trigger plugin detection and will load all
+# components
+import guiml.plugins
+
 def tree_dfs(node):
     """
     Yield nodes in DFS search. On every backtrack None is returned.
@@ -224,6 +231,13 @@ def structure(data, data_type):
     else:
         return data_type(data)
 
+_logged_unknown_components = set()
+
+def log_unknown_component(tag):
+    if tag not in _logged_unknown_components:
+        logging.warning(f'Encountered unknown tag {tag}')
+        _logged_unknown_components.add(tag)
+
 class ComponentManager(PersistationManager):
     @dataclass
     class Dependencies:
@@ -320,12 +334,13 @@ class ComponentManager(PersistationManager):
         if node.tag == "application" and self.dependencies is None:
             self.dependencies = injector.get_dependencies(self)
             self.on_init()
-
-        if node.tag in _components:
+        elif node.tag in _components:
             component_cls = _components[node.tag].component_class
             properties = self.make_properties(component_cls, node, parent_nodes)
             dependencies = injector.get_dependencies(component_cls)
             component = component_cls(properties, dependencies)
+        else:
+            log_unknown_component(node.tag)
 
         result.component = component
         return result
