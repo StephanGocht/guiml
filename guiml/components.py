@@ -2,9 +2,16 @@ from dataclasses import dataclass, field
 from typing import Type, Optional, Callable
 import dataclasses
 import pyglet
-import cairo
+
+# import cairo
+import cairocffi as cairo
+import pangocffi as pango
+import pangocairocffi as pangocairo
+
+
 import ctypes
 import xml.etree.ElementTree as ET
+from collections import namedtuple
 
 import functools
 from pyglet import app, clock, gl, image, window
@@ -41,7 +48,7 @@ class Rectangle:
 
     @property
     def height(self):
-        return self.bottom - self.right
+        return self.bottom - self.top
 
 class Component:
     @dataclass
@@ -215,11 +222,11 @@ class Window(Component):
         self.dependencies.canvas.context = self.context
 
     def clear(self):
-        self.context.set_operator(cairo.Operator.CLEAR)
+        self.context.set_operator(cairo.OPERATOR_CLEAR)
         self.context.rectangle(0, 0, self.properties.width, self.properties.height)
         self.context.fill()
 
-        self.context.set_operator(cairo.Operator.OVER)
+        self.context.set_operator(cairo.OPERATOR_OVER)
 
     def on_update(self, dt):
         self.clear()
@@ -296,6 +303,8 @@ class Button(Div):
             if self.properties.on_click:
                 self.properties.on_click()
 
+TextExtents = namedtuple("TextExtents", 'x_bearing y_bearing width height x_advance y_advance')
+
 def get_extent(text, font_size):
     fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
     fontMatrix = cairo.Matrix()
@@ -304,7 +313,7 @@ def get_extent(text, font_size):
     options = cairo.FontOptions()
 
     font = cairo.ScaledFont(fontFace, fontMatrix, user2device, options)
-    return font.text_extents(text)
+    return TextExtents(*font.text_extents(text))
 
 @component(
     name = "input",
@@ -348,19 +357,20 @@ class Input(Div):
             self.text = self.text[:self.cursor_position] + text + self.text[self.cursor_position:]
             self.cursor_position += len(text)
 
-    def on_draw(self, ctx):
-        super().on_draw(ctx)
+    def on_draw(self, context):
+        super().on_draw(context)
 
-        font_size = 14
-        cursor_x_position = get_extent(self.text[:self.cursor_position], font_size).x_advance
+        with context:
+            font_size = 14
+            cursor_x_position = get_extent(self.text[:self.cursor_position], font_size).x_advance
 
-        content = self.content_position
-        cursor_width = 2
+            content = self.content_position
+            cursor_width = 2
 
-        ctx.rectangle(content.left + cursor_x_position, content.top + 2, cursor_width, font_size)
-        pat = cairo.SolidPattern(0, 0, 0, 1)
-        ctx.set_source(pat)
-        ctx.fill()
+            context.rectangle(content.left + cursor_x_position, content.top + 2, cursor_width, font_size)
+            pat = cairo.SolidPattern(0, 0, 0, 1)
+            context.set_source(pat)
+            context.fill()
 
     def on_text_motion(self, motion):
         if motion == pyglet_key.MOTION_BACKSPACE:
@@ -389,7 +399,7 @@ class Input(Div):
         self._on_text_motion_subscription.cancel()
 
 
-@component("text")
+#@component("text")
 class Text(DrawableComponent):
     @dataclass
     class Properties(Container.Properties):
@@ -415,3 +425,56 @@ class Text(DrawableComponent):
                              cairo.FONT_WEIGHT_NORMAL)
         ctx.move_to(self.properties.position.left, self.properties.position.top + self.height)
         ctx.show_text(self.properties.text)
+
+@component("text")
+class Text(DrawableComponent):
+    @dataclass
+    class Properties(Container.Properties):
+        font_size: int = 14
+        color: Color = field(default_factory = Color)
+        text: str = ""
+
+    @property
+    def width(self):
+        extend = get_extent(self.properties.text, self.properties.font_size)
+        return extend.x_advance
+
+    @property
+    def height(self):
+        return self.properties.font_size
+
+    def on_draw(self, context):
+        super().on_draw(context)
+
+        assert(self.properties.position.is_valid())
+
+        with context:
+            context.new_path()
+
+            context.rectangle(self.properties.position.left, self.properties.position.top, self.properties.position.width, self.properties.position.height)
+            context.set_line_width(1)
+            context.set_source(cairo.SolidPattern(0, 1, 0, 1))
+            context.stroke()
+
+        with context:
+            context.move_to(self.properties.position.left, self.properties.position.top)
+            pat = cairo.SolidPattern(0, 0, 0, 1)
+            context.set_source(pat)
+
+            layout = pangocairo.create_layout(context)
+            layout.width = pango.units_from_double(self.properties.position.width)
+            # print(self.properties.position.width)
+            #layout.height = pango.units_from_double(self.properties.position.height)
+            layout.apply_markup(self.properties.text)
+            pangocairo.show_layout(context, layout)
+
+        # todo:
+        # 1) Create a recording surface https://doc.courtbouillon.org/cairocffi/stable/api.html#cairocffi.RecordingSurface
+        # 2) Create a layout and write text into the recording surface https://pangocairocffi.readthedocs.io/en/latest/overview.html
+        # 3) Draw recording surface into the actual surface.
+        # 4) Implement missing methods from Layout https://docs.gtk.org/Pango/class.Layout.html
+        # 4.1) Layout::xy_to_index
+        # 4.2) Layout::index_to_*
+        # 4.3) Layout::get_cursor_pos
+        # 4.4) Layout::get_caret_pos
+

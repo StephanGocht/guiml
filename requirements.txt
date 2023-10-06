@@ -1,4 +1,6 @@
 cattrs
 pyyaml
 pyglet
-pycairo
+cairocffi
+pangocffi
+pangocairocffi

@@ -168,6 +168,15 @@ class Canvas(Injectable):
   def draw(self):
     self.on_draw(self.context)
 
+# @injectable("window")
+# class PangoContext(Injectable):
+#   @dataclass
+#   class Dependencies:
+#     canvas: Canvas
+
+#   def on_init(self):
+#     self.context = pangocairo.create_context(self.canvas.context)
+
 @injectable("window")
 class MouseControl(Injectable):
   def on_init(self):
