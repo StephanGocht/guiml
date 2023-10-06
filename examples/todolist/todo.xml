@@ -1,6 +1,6 @@
 <template>
   <todolist id="todolist" py_todos="self.todos"></todolist>
-  <input id="input_field"></input>
+  <input id="input_field" bind_text="self.text"></input>
   <button id="add_button" on_click="self.add_clicked">
     <text py_text="f'add todo #{len(self.todos)}'"></text>
   </button>

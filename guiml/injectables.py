@@ -24,6 +24,9 @@ class Injectable:
   def on_init(self):
     pass
 
+  def on_destroy(self):
+    pass
+
 class CyclicDependencyError(RuntimeError):
   pass
 
@@ -86,13 +89,13 @@ class Injector:
 
   def add_tag(self, tag):
     result = dict()
+    self.injectables.append(result)
 
     to_add = DependencyResolver(_injectables[tag])
     for injectable in to_add:
       if injectable not in self:
         result[injectable] = injectable(self.get_dependencies(injectable))
 
-    self.injectables.append(result)
     return result
 
   def get_dependencies(self, class_with_dependencies):
@@ -101,12 +104,6 @@ class Injector:
         args[field_name] = self[field_type]
 
       return get_dependency_class(class_with_dependencies)(**args)
-
-  def pop_tag(self):
-    pass
-
-  def copy(self):
-    pass
 
   def __contains__(self, key):
     for layer in reversed(self.injectables):
@@ -146,15 +143,6 @@ class Observable:
 
   def unsubscribe(self, callback):
     self.callbacks.remove(callback)
-
-# @injectable("window")
-# class PangoContext(Injectable):
-#   @dataclass
-#   class Dependencies:
-#     canvas: Canvas
-
-#   def on_init(self):
-#     self.context = pangocairo.create_context(self.canvas.context)
 
 @injectable("application")
 class UILoop(Injectable):

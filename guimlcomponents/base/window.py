@@ -15,6 +15,7 @@ class Canvas(Injectable):
     # context will be created and set by the window component
     self.context = None
     self.on_draw = Observable()
+    self.on_context_change = Observable()
 
   def draw(self):
     self.on_draw(self.context)
@@ -123,6 +124,7 @@ class Window(Component):
 
         self.context = cairo.Context(surface)
         self.dependencies.canvas.context = self.context
+        self.dependencies.canvas.on_context_change(self.context)
 
     def clear(self):
         self.context.set_operator(cairo.OPERATOR_CLEAR)

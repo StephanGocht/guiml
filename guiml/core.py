@@ -200,6 +200,33 @@ class NodeObjects:
         for injectable in injectables.items():
             injectable.on_destroy()
 
+def make_intermediate_dataclass(base, properties):
+    # Create an intermediate dataclass that disables initialization of the
+    # property so that a bound value does not get overwritten
+
+    definitions = dict()
+    annotations = dict()
+
+    for name, data in properties.items():
+        value, field_type = data
+        annotations[name] = field_type
+        definitions[name] = dataclasses.field(init = False)
+
+    definitions['__annotations__'] = annotations
+    return dataclass(type("guiml_intermediate_class", (base,), definitions))
+
+def add_properties(base, properties):
+    intermediate = make_intermediate_dataclass(base, properties)
+
+    definitions = dict()
+
+    for name, data in properties.items():
+        value, field_type = data
+        definitions[name] = value
+
+    return dataclass(type('guiml_added_properties', (intermediate,), definitions))
+
+
 def structure(data, data_type):
     if data is None:
         return None
@@ -207,31 +234,40 @@ def structure(data, data_type):
         return data
     elif dataclasses.is_dataclass(data_type):
         args = dict()
+        properties = dict()
         for field in dataclasses.fields(data_type):
             try:
                 value = data[field.name]
             except KeyError:
                 pass
             else:
-                origin = typing.get_origin(field.type)
-                if origin is not None:
-                    type_args = typing.get_args(field.type)
-                    if origin is typing.Union:
-                        if len(type_args) == 2 and type(None) in type_args:
-                            if value is None:
-                                args[field.name] = value
-                            else:
-                                field_type = next(iter( (t for t in type_args if t is not type(None)) ))
-                                args[field.name] = structure(value, field_type)
-                        else:
-                            args[field.name] = value
+                if isinstance(value, property):
+                    properties[field.name] = (value, field.type)
                 else:
-                    args[field.name] = structure(value, field.type)
+                    origin = typing.get_origin(field.type)
+                    if origin is not None:
+                        type_args = typing.get_args(field.type)
+                        if origin is typing.Union:
+                            if len(type_args) == 2 and type(None) in type_args:
+                                if value is None:
+                                    args[field.name] = value
+                                else:
+                                    field_type = next(iter( (t for t in type_args if t is not type(None)) ))
+                                    args[field.name] = structure(value, field_type)
+                            else:
+                                args[field.name] = value
+                    else:
+                        args[field.name] = structure(value, field.type)
 
+        if properties:
+            data_type = add_properties(data_type, properties)
 
         return data_type(**args)
     else:
-        return data_type(data)
+        try:
+            return data_type(data)
+        except TypeError:
+            return data
 
 _logged_unknown_components = set()
 

@@ -128,12 +128,13 @@ class ControlTransformer:
     CLEAR_CONTEXT_ATTRIBUTE = "_clear_context"
 
     def __init__(self):
-        self.getter = lambda value, context: lambda: eval(value, None, context)
+        self.getter = lambda value, context: lambda self: eval(value, None, context)
 
         def setter(value, context):
-            def set(x):
+            def _setter(self, x):
                 context["_guiml_bind_value"] = x
-                exec("{value} = _guiml_bind_value", None, context)
+                exec(f"{value} = _guiml_bind_value", None, context)
+            return _setter
         self.setter = setter
 
 

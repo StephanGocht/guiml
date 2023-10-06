@@ -6,6 +6,42 @@ from collections import namedtuple
 from guiml.registry import component
 
 from guimlcomponents.base.container import *
+from guimlcomponents.base.window import *
+
+from typing import Optional, Callable
+
+def escape( str_xml: str ):
+    str_xml = str_xml.replace("&", "&amp;")
+    str_xml = str_xml.replace("<", "&lt;")
+    str_xml = str_xml.replace(">", "&gt;")
+    str_xml = str_xml.replace("\"", "&quot;")
+    str_xml = str_xml.replace("'", "&apos;")
+    return str_xml
+
+def unescape( str_xml: str ):
+    str_xml = str_xml.replace("&lt;", "<")
+    str_xml = str_xml.replace("&gt;", ">")
+    str_xml = str_xml.replace( "&quot;", "\"")
+    str_xml = str_xml.replace("&apos;", "'")
+    str_xml = str_xml.replace("&amp;", "&")
+    return str_xml
+
+@injectable("window")
+class PangoContext(Injectable):
+    @dataclass
+    class Dependencies:
+        canvas: Canvas
+
+    def on_init(self):
+        super().on_init()
+        subscription = self.canvas.on_context_change.subscribe(self.on_canvas_context_change)
+        self._on_context_change = subscription
+
+    def on_destroy(self):
+        self._on_context_change.cancel()
+
+    def on_canvas_context_change(self, context):
+        self.context = pangocairo.create_context(context)
 
 TextExtents = namedtuple("TextExtents", 'x_bearing y_bearing width height x_advance y_advance')
 
@@ -21,16 +57,22 @@ def get_extent(text, font_size):
 
 @component(
     name = "input",
-    template = """<template><text py_text="self.text"></text></template>"""
+    template = """<template><text py_text="self.escaped_text"></text></template>"""
 )
 class Input(Div):
     @dataclass
     class Properties(Div.Properties):
-        text: str = None
+        text: str = ''
+        on_text: Optional[Callable] = None
+
 
     @dataclass
     class Dependencies(Div.Dependencies):
         text_control: TextControl
+
+    @property
+    def escaped_text(self):
+        return escape(self.text)
 
     @property
     def text(self):
@@ -60,6 +102,9 @@ class Input(Div):
         if text:
             self.text = self.text[:self.cursor_position] + text + self.text[self.cursor_position:]
             self.cursor_position += len(text)
+
+            if self.properties.on_text is not None:
+                self.properties.on_text(self.text)
 
     def on_draw(self, context):
         super().on_draw(context)
@@ -138,19 +183,31 @@ class Text(DrawableComponent):
         color: Color = field(default_factory = Color)
         text: str = ""
 
+    @dataclass
+    class Dependencies(DrawableComponent.Dependencies):
+        pango: PangoContext
+
+    def get_layout(self):
+        layout = pango.Layout(self.dependencies.pango.context)
+        layout.apply_markup(self.properties.text)
+        return layout
+
     @property
     def width(self):
-        extend = get_extent(self.properties.text, self.properties.font_size)
-        return extend.x_advance
+        value = self.get_layout().get_size()[0]
+        value = pango.units_to_double(value)
+        return value
 
     @property
     def height(self):
-        return self.properties.font_size
+        value = self.get_layout().get_size()[1]
+        value = pango.units_to_double(value)
+        return value
 
     def on_draw(self, context):
         super().on_draw(context)
 
-        assert(self.properties.position.is_valid())
+        # assert(self.properties.position.is_valid())
 
         with context:
             context.new_path()
@@ -165,11 +222,7 @@ class Text(DrawableComponent):
             pat = cairo.SolidPattern(0, 0, 0, 1)
             context.set_source(pat)
 
-            layout = pangocairo.create_layout(context)
-            layout.width = pango.units_from_double(self.properties.position.width)
-            # print(self.properties.position.width)
-            #layout.height = pango.units_from_double(self.properties.position.height)
-            layout.apply_markup(self.properties.text)
+            layout = self.get_layout()
             pangocairo.show_layout(context, layout)
 
         # todo:

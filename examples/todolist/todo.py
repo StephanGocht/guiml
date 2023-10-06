@@ -22,6 +22,7 @@ class Todo(Container):
     pass
 
   def on_init(self):
+    self.text = ''
     print("init todo")
 
   def on_destroy(self):
@@ -31,7 +32,9 @@ class Todo(Container):
   def todos(self):
     return self.dependencies.todo_service.todos
 
-
   def add_clicked(self):
+    print(self.text)
+
     todos = self.dependencies.todo_service.todos
-    todos.append("todo %i"%(len(todos)))
+    todos.append(self.text)
+    self.text = ''

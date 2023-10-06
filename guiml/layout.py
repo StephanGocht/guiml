@@ -31,14 +31,16 @@ class HorizontalFlow:
                 max_height = 0
 
             position = child.properties.position
+
             position.top = posy
             position.left = posx
+            position.bottom = posy + child.height
+            position.right = posx + child.width
 
             posx += child.width
             max_height = max(max_height, child.height)
 
-            position.bottom = posy + child.height
-            position.right = posx + child.height
+
 
 
 @layout("grid")
