@@ -3,38 +3,39 @@ from dataclasses import dataclass, field
 
 from guiml.injectables import Injectable, injectable
 
+
 @injectable("todo")
 class TodoService(Injectable):
-  def on_init(self):
-    self.todos = ["todo %i"%(i) for i in range(4)]
 
-@component(
-  name = "todo",
-  template_file = "todo.xml"
-)
+    def on_init(self):
+        self.todos = ["todo %i" % (i) for i in range(4)]
+
+
+@component(name="todo", template_file="todo.xml")
 class Todo(Container):
-  @dataclass
-  class Dependencies:
-    todo_service: TodoService
 
-  @dataclass
-  class Properties(Container.Properties):
-    pass
+    @dataclass
+    class Dependencies:
+        todo_service: TodoService
 
-  def on_init(self):
-    self.text = 'Das ist ein Üäöööä text der sher komisch istx'
-    print("init todo")
+    @dataclass
+    class Properties(Container.Properties):
+        pass
 
-  def on_destroy(self):
-    print("destroy todo")
+    def on_init(self):
+        self.text = 'Das ist ein Üäöööä text der sher komisch istx'
+        print("init todo")
 
-  @property
-  def todos(self):
-    return self.dependencies.todo_service.todos
+    def on_destroy(self):
+        print("destroy todo")
 
-  def add_clicked(self):
-    print(self.text)
+    @property
+    def todos(self):
+        return self.dependencies.todo_service.todos
 
-    todos = self.dependencies.todo_service.todos
-    todos.append(self.text)
-    self.text = ''
+    def add_clicked(self):
+        print(self.text)
+
+        todos = self.dependencies.todo_service.todos
+        todos.append(self.text)
+        self.text = ''

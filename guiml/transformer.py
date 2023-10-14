@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from guiml.registry import _components
 from guiml.filecache import FileCache, MarkupLoader
 
+
 def del_atribute(node, attribute):
     # the doc states that for the attrib dictionary: 'an ElementTree
     # implementation may choose to use another internal representation, and
@@ -11,7 +12,8 @@ def del_atribute(node, attribute):
     # that deletion on it doesn't work in case we switch to a different
     # implementation
     del node.attrib[attribute]
-    assert(node.get(attribute) is None)
+    assert (node.get(attribute) is None)
+
 
 class Transformer:
     """
@@ -29,7 +31,9 @@ class Transformer:
 
         pass
 
+
 class DynamicDOM:
+
     def __init__(self, manipulators):
         self.manipulators = manipulators
 
@@ -46,6 +50,7 @@ class DynamicDOM:
 
 
 class TextTransformer:
+
     def addText(self, element, text, position):
         if text:
             text = text.strip()
@@ -74,6 +79,7 @@ class TextTransformer:
 
         return self.modified
 
+
 class TemplatesTransformer:
     template_marker = "_template_expanded"
 
@@ -82,7 +88,7 @@ class TemplatesTransformer:
 
     def insert_template(self, node, template):
         # todo add proper error message
-        assert(template.tag == "template")
+        assert (template.tag == "template")
 
         attrib = node.attrib
         node.clear()
@@ -112,6 +118,7 @@ class TemplatesTransformer:
 
         return False
 
+
 for_loop = """
 __result__ = list()
 %(for_loop)s:
@@ -121,6 +128,7 @@ __result__ = list()
     __result__.append(__locals__)
 """
 
+
 class ControlTransformer:
     CONTROL_ATTRIBUTE = "control"
 
@@ -128,18 +136,21 @@ class ControlTransformer:
     CLEAR_CONTEXT_ATTRIBUTE = "_clear_context"
 
     def __init__(self):
-        self.getter = lambda value, context: lambda self: eval(value, None, context)
+        self.getter = lambda value, context: lambda self: eval(
+            value, None, context)
 
         def setter(value, context):
+
             def _setter(self, x):
                 context["_guiml_bind_value"] = x
                 exec(f"{value} = _guiml_bind_value", None, context)
+
             return _setter
+
         self.setter = setter
 
-
     def eval_if(self, control, context):
-        return eval("bool(%s)"%(control[2:]), None, context)
+        return eval("bool(%s)" % (control[2:]), None, context)
 
     def eval_for(self, control, context):
         local = {**context}
@@ -168,14 +179,12 @@ class ControlTransformer:
                     del_atribute(node, key)
                     key = key[5:]
 
-                    new_value = property(self.getter(value, context), self.setter(value, context))
+                    new_value = property(self.getter(value, context),
+                                         self.setter(value, context))
 
                     node.set(key, new_value)
 
-
-
         return modified
-
 
     def transform(self, node, context):
         modified = False

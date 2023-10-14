@@ -9,38 +9,45 @@ import ctypes
 from pyglet import app, clock, gl, image, window
 from pyglet.window import key as pyglet_key
 
+
 @injectable("window")
 class Canvas(Injectable):
-  def on_init(self):
-    # context will be created and set by the window component
-    self.context = None
-    self.on_draw = Observable()
-    self.on_context_change = Observable()
 
-  def draw(self):
-    self.on_draw(self.context)
+    def on_init(self):
+        # context will be created and set by the window component
+        self.context = None
+        self.on_draw = Observable()
+        self.on_context_change = Observable()
+
+    def draw(self):
+        self.on_draw(self.context)
+
 
 @injectable("window")
 class MouseControl(Injectable):
-  def on_init(self):
-    self.on_mouse_motion = Observable()
-    self.on_mouse_press = Observable()
-    self.on_mouse_release = Observable()
-    self.on_mouse_drag = Observable()
-    self.on_mouse_enter = Observable()
-    self.on_mouse_leave = Observable()
-    self.on_mouse_scroll = Observable()
+
+    def on_init(self):
+        self.on_mouse_motion = Observable()
+        self.on_mouse_press = Observable()
+        self.on_mouse_release = Observable()
+        self.on_mouse_drag = Observable()
+        self.on_mouse_enter = Observable()
+        self.on_mouse_leave = Observable()
+        self.on_mouse_scroll = Observable()
+
 
 @injectable("window")
 class TextControl(Injectable):
-  def on_init(self):
-    self.on_text = Observable()
-    self.on_text_motion = Observable()
-    self.on_text_motion_select = Observable()
+
+    def on_init(self):
+        self.on_text = Observable()
+        self.on_text_motion = Observable()
+        self.on_text_motion_select = Observable()
 
 
 @component("window")
 class Window(Component):
+
     @dataclass
     class Properties:
         width: int = 400
@@ -56,7 +63,6 @@ class Window(Component):
         ui_loop: UILoop
         mouse_control: MouseControl
         text_control: TextControl
-
 
     def on_init(self):
         super().on_init()
@@ -88,8 +94,9 @@ class Window(Component):
         ]
 
         args = {
-            event: functools.partial(self.remap_mouse_pos,
-                getattr(self.dependencies.mouse_control, event))
+            event:
+            functools.partial(self.remap_mouse_pos,
+                              getattr(self.dependencies.mouse_control, event))
             for event in mouse_events
         }
 
@@ -99,15 +106,21 @@ class Window(Component):
     #     self._ui_loop_on_update_subscription.cancel()
 
     def init_window(self):
-        args = {key: getattr(self.properties, key) for key in ["width", "height", "resizable"]}
+        args = {
+            key: getattr(self.properties, key)
+            for key in ["width", "height", "resizable"]
+        }
         args["vsync"] = False
         self.window = pyglet.window.Window(**args)
         self.window.set_location(self.properties.left, self.properties.top)
 
-        self.window.push_handlers(on_draw = self.on_draw)
-        self.window.push_handlers(on_text = self.dependencies.text_control.on_text)
-        self.window.push_handlers(on_text_motion = self.dependencies.text_control.on_text_motion)
-        self.window.push_handlers(on_text_motion_select = self.dependencies.text_control.on_text_motion_select)
+        self.window.push_handlers(on_draw=self.on_draw)
+        self.window.push_handlers(
+            on_text=self.dependencies.text_control.on_text)
+        self.window.push_handlers(
+            on_text_motion=self.dependencies.text_control.on_text_motion)
+        self.window.push_handlers(on_text_motion_select=self.dependencies.
+                                  text_control.on_text_motion_select)
 
     def on_draw(self):
         self.window.clear()
@@ -121,8 +134,11 @@ class Window(Component):
 
         # Create texture backed by ImageSurface
         self.surface_data = (ctypes.c_ubyte * (width * height * 4))()
-        surface = cairo.ImageSurface.create_for_data(self.surface_data, cairo.FORMAT_ARGB32, width, height, width * 4);
-        self.texture = image.Texture.create(width, height, gl.GL_TEXTURE_2D, gl.GL_RGBA)
+        surface = cairo.ImageSurface.create_for_data(self.surface_data,
+                                                     cairo.FORMAT_ARGB32,
+                                                     width, height, width * 4)
+        self.texture = image.Texture.create(width, height, gl.GL_TEXTURE_2D,
+                                            gl.GL_RGBA)
         self.texture.tex_coords = (0, 1, 0) + (1, 1, 0) + (1, 0, 0) + (0, 0, 0)
 
         self.context = cairo.Context(surface)
@@ -131,7 +147,8 @@ class Window(Component):
 
     def clear(self):
         self.context.set_operator(cairo.OPERATOR_CLEAR)
-        self.context.rectangle(0, 0, self.properties.width, self.properties.height)
+        self.context.rectangle(0, 0, self.properties.width,
+                               self.properties.height)
         self.context.fill()
 
         self.context.set_operator(cairo.OPERATOR_OVER)
@@ -142,6 +159,6 @@ class Window(Component):
 
         # Update texture from sruface data
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.texture.id)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA,
-            self.properties.width, self.properties.height, 0, gl.GL_BGRA,
-            gl.GL_UNSIGNED_BYTE, self.surface_data)
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, self.properties.width,
+                        self.properties.height, 0, gl.GL_BGRA,
+                        gl.GL_UNSIGNED_BYTE, self.surface_data)

@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from guiml.registry import layout
 
+
 @layout("hflow")
 class HorizontalFlow:
+
     @dataclass
     class Properties():
         pass
@@ -41,10 +43,9 @@ class HorizontalFlow:
             max_height = max(max_height, child.height)
 
 
-
-
 @layout("grid")
 class GridLayout:
+
     @dataclass
     class Properties():
         rows: int = 1
@@ -63,19 +64,23 @@ class GridLayout:
     def layout(self, children):
         position = self.component.content_position
 
-        assert(position.is_valid())
+        assert (position.is_valid())
 
         width = position.right - position.left
         height = position.bottom - position.top
 
-        col2pos = lambda col: (col * width / self.component.properties.cols) + position.left
-        row2pos = lambda row: (row * height / self.component.properties.rows) + position.top
+        col2pos = lambda col: (col * width / self.component.properties.cols
+                               ) + position.left
+        row2pos = lambda row: (row * height / self.component.properties.rows
+                               ) + position.top
 
         for i, child in enumerate(children):
             child_pos = child.properties.position
 
             child_pos.top = row2pos(child.properties.row)
-            child_pos.bottom = row2pos(child.properties.row + child.properties.rowspan)
+            child_pos.bottom = row2pos(child.properties.row +
+                                       child.properties.rowspan)
 
             child_pos.left = col2pos(child.properties.col)
-            child_pos.right = col2pos(child.properties.col + child.properties.colspan)
+            child_pos.right = col2pos(child.properties.col +
+                                      child.properties.colspan)

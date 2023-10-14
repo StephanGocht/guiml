@@ -17,10 +17,12 @@ class Color:
     blue: float = 0.
     alpha: float = 0.
 
+
 @dataclass
 class Border:
     width: int = 0.
-    color: Color = field(default_factory = Color)
+    color: Color = field(default_factory=Color)
+
 
 @dataclass
 class Rectangle:
@@ -43,18 +45,22 @@ class Rectangle:
     def is_inside(self, x, y):
         return self.left <= x and x <= self.right and self.top <= y and y <= self.bottom
 
+
 class Container(Component):
+
     @dataclass
     class Properties:
         # bounding box for registering clicks
-        position: Rectangle = field(default_factory = Rectangle)
+        position: Rectangle = field(default_factory=Rectangle)
         layout: str = ""
 
     @property
     def content_position(self):
         return self.properties.position
 
+
 class DrawableComponent(Container):
+
     @dataclass
     class Properties(Container.Properties):
         draw_bounding_box: bool = False
@@ -65,14 +71,18 @@ class DrawableComponent(Container):
 
     def on_init(self):
         super().on_init()
-        self._canvas_on_draw_subscription = self.dependencies.canvas.on_draw.subscribe(self.on_draw)
+        self._canvas_on_draw_subscription = self.dependencies.canvas.on_draw.subscribe(
+            self.on_draw)
 
     def on_draw(self, context):
         if self.properties.draw_bounding_box:
             with context:
                 context.new_path()
 
-                context.rectangle(self.properties.position.left, self.properties.position.top, self.properties.position.width, self.properties.position.height)
+                context.rectangle(self.properties.position.left,
+                                  self.properties.position.top,
+                                  self.properties.position.width,
+                                  self.properties.position.height)
                 context.set_line_width(1)
                 context.set_source(cairo.SolidPattern(0, 1, 0, 1))
                 context.stroke()
@@ -81,14 +91,16 @@ class DrawableComponent(Container):
         self._canvas_on_draw_subscription.cancel()
         super().on_destroy()
 
+
 @component("div")
 class Div(DrawableComponent):
+
     @dataclass
     class Properties(DrawableComponent.Properties):
-        border: Border = field(default_factory = Border)
-        margin: Rectangle = field(default_factory = Rectangle)
-        padding: Rectangle = field(default_factory = Rectangle)
-        background: Color = field(default_factory = Color)
+        border: Border = field(default_factory=Border)
+        margin: Rectangle = field(default_factory=Rectangle)
+        padding: Rectangle = field(default_factory=Rectangle)
+        background: Color = field(default_factory=Color)
 
     @dataclass
     class Dependencies(DrawableComponent.Dependencies):
@@ -117,17 +129,21 @@ class Div(DrawableComponent):
             ctx.rectangle(left, top, right - left, bottom - top)
             ctx.set_line_width(self.properties.border.width)
             color = self.properties.border.color
-            pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
+            pat = cairo.SolidPattern(color.red, color.green, color.blue,
+                                     color.alpha)
             ctx.set_source(pat)
             ctx.stroke_preserve()
 
             color = self.properties.background
-            pat = cairo.SolidPattern(color.red, color.green, color.blue, color.alpha)
+            pat = cairo.SolidPattern(color.red, color.green, color.blue,
+                                     color.alpha)
             ctx.set_source(pat)
             ctx.fill()
 
+
 @component("button")
 class Button(Div):
+
     @dataclass
     class Properties(Div.Properties):
         on_click: Optional[Callable] = None

@@ -1,6 +1,8 @@
 from dataclasses import dataclass as _dataclass
 
+
 class Component:
+
     @_dataclass
     class Properties:
         pass
@@ -19,6 +21,7 @@ class Component:
 
     def on_destroy(self):
         pass
+
 
 class AsMemberMixin:
     """Inheriting from this class allows to access properties and dependencies

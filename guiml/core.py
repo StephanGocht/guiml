@@ -15,21 +15,18 @@ from collections import defaultdict, namedtuple
 
 from guiml.filecache import StyleLoader, MarkupLoader
 
-
 from guiml.transformer import *
 
 from guiml.registry import _components, _layouts
 from guiml.injectables import Injector, UILoop
 
-
-
 import logging
-
 
 # by importing guiml plugins we trigger plugin detection and will load all
 # components
 import guiml.plugins
 import guiml.layout
+
 
 def tree_dfs(node):
     """
@@ -48,6 +45,7 @@ def tree_dfs(node):
 
             for child in reversed(node):
                 queue.append(child)
+
 
 def merge_data(a, b):
     """
@@ -68,9 +66,12 @@ def merge_data(a, b):
     else:
         return b
 
+
 NodeComponentPair = namedtuple("NodeComponentPair", "node component")
 
+
 class PersistationStrategy:
+
     def store(self, children, payloads):
         pass
 
@@ -80,7 +81,9 @@ class PersistationStrategy:
     def __iter__(self):
         pass
 
+
 class OrderPersistation:
+
     def __init__(self):
         self.storage = dict()
 
@@ -93,7 +96,8 @@ class OrderPersistation:
 
     def save(self, children, payloads):
         self.storage = dict()
-        for number, child, payload in zip(self.sibling_number(children), children, payloads):
+        for number, child, payload in zip(self.sibling_number(children),
+                                          children, payloads):
             self.storage[(child.tag, number)] = payload
 
     def load(self, children):
@@ -103,17 +107,19 @@ class OrderPersistation:
     def __iter__(self):
         return iter(self.storage.values())
 
+
 def new_strategy_from_name(name):
     if name != "order":
         raise NotImplementedError()
     return OrderPersistation()
+
 
 class PersistationManager():
     STRATEGY_ATTRIBUTE = "persistation_strategy"
 
     @dataclass
     class DataNode:
-        children: dict[str, PersistationStrategy] = field(default_factory = dict)
+        children: dict[str, PersistationStrategy] = field(default_factory=dict)
         data: Any = None
 
     def __init__(self):
@@ -147,7 +153,8 @@ class PersistationManager():
 
         childs_by_strategy = defaultdict(list)
         for child in node:
-            childs_by_strategy[child.get(self.STRATEGY_ATTRIBUTE, "order")].append(child)
+            childs_by_strategy[child.get(self.STRATEGY_ATTRIBUTE,
+                                         "order")].append(child)
 
         restored_childs = dict()
         for key, children in childs_by_strategy.items():
@@ -161,7 +168,8 @@ class PersistationManager():
                         maintained.add(id(data_node.data))
 
                 for data_node in strategy:
-                    if data_node.data is not None and id(data_node.data) not in maintained:
+                    if data_node.data is not None and id(
+                            data_node.data) not in maintained:
                         self.destroy_data(data_node.data)
 
             else:
@@ -172,7 +180,8 @@ class PersistationManager():
 
         child_data = dict()
         for child in node:
-            data_node = self.traverse(child, restored_childs[child], parent_nodes)
+            data_node = self.traverse(child, restored_childs[child],
+                                      parent_nodes)
             child_data[child] = data_node
 
         parent_nodes.pop()
@@ -190,6 +199,7 @@ class PersistationManager():
     def __iter__(self):
         pass
 
+
 @dataclass
 class NodeObjects:
     component: "Optional[Component]" = None
@@ -199,6 +209,7 @@ class NodeObjects:
         component.on_destroy()
         for injectable in injectables.items():
             injectable.on_destroy()
+
 
 def make_intermediate_dataclass(base, properties):
     # Create an intermediate dataclass that disables initialization of the
@@ -210,10 +221,11 @@ def make_intermediate_dataclass(base, properties):
     for name, data in properties.items():
         value, field_type = data
         annotations[name] = field_type
-        definitions[name] = dataclasses.field(init = False)
+        definitions[name] = dataclasses.field(init=False)
 
     definitions['__annotations__'] = annotations
-    return dataclass(type("guiml_intermediate_class", (base,), definitions))
+    return dataclass(type("guiml_intermediate_class", (base, ), definitions))
+
 
 def add_properties(base, properties):
     intermediate = make_intermediate_dataclass(base, properties)
@@ -224,7 +236,8 @@ def add_properties(base, properties):
         value, field_type = data
         definitions[name] = value
 
-    return dataclass(type('guiml_added_properties', (intermediate,), definitions))
+    return dataclass(
+        type('guiml_added_properties', (intermediate, ), definitions))
 
 
 def structure(data, data_type):
@@ -252,8 +265,11 @@ def structure(data, data_type):
                                 if value is None:
                                     args[field.name] = value
                                 else:
-                                    field_type = next(iter( (t for t in type_args if t is not type(None)) ))
-                                    args[field.name] = structure(value, field_type)
+                                    field_type = next(
+                                        iter((t for t in type_args
+                                              if t is not type(None))))
+                                    args[field.name] = structure(
+                                        value, field_type)
                             else:
                                 args[field.name] = value
                     else:
@@ -269,14 +285,18 @@ def structure(data, data_type):
         except TypeError:
             return data
 
+
 _logged_unknown_components = set()
+
 
 def log_unknown_component(tag):
     if tag not in _logged_unknown_components:
         logging.warning(f'Encountered unknown tag {tag}')
         _logged_unknown_components.add(tag)
 
+
 class ComponentManager(PersistationManager):
+
     @dataclass
     class Dependencies:
         ui_loop: UILoop
@@ -299,17 +319,18 @@ class ComponentManager(PersistationManager):
         self.style_loader = StyleLoader("styles.yml")
         self.markup_loader = MarkupLoader(root_markup)
         self.dynamic_dom = DynamicDOM([
-                TemplatesTransformer(),
-                ControlTransformer(),
-                TextTransformer(),
-            ])
+            TemplatesTransformer(),
+            ControlTransformer(),
+            TextTransformer(),
+        ])
 
         self.do_update()
 
     def on_init(self):
         # on_init is called when application tag is encountered
 
-        self._update_subscription = self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+        self._update_subscription = self.dependencies.ui_loop.on_update.subscribe(
+            self.on_update)
 
     def on_destroy(self):
         self._update_subscription.cancel()
@@ -324,11 +345,12 @@ class ComponentManager(PersistationManager):
             # let earlier mention have precedence
             classes.reverse()
             for style_class in classes:
-                data = merge_data(data, self.style.get(".%s"%(style_class), {}))
+                data = merge_data(data,
+                                  self.style.get(".%s" % (style_class), {}))
 
         tag_id = node.get("id")
         if tag_id:
-            data = merge_data(data, self.style.get("$%s"%(tag_id), {}))
+            data = merge_data(data, self.style.get("$%s" % (tag_id), {}))
 
         data = merge_data(data, node.attrib)
 
@@ -349,32 +371,34 @@ class ComponentManager(PersistationManager):
             for parent in reversed(parents):
                 parent_component = self.node_data[parent].component
                 if parent_component:
-                    layout_parent_cls = getattr(parent_component.properties, "layout", None)
+                    layout_parent_cls = getattr(parent_component.properties,
+                                                "layout", None)
                     break
 
             if layout_parent_cls:
                 layout_parent_cls = _layouts[layout_parent_cls]
                 property_classes.append(layout_parent_cls.ChildProperties)
 
-        property_class = dataclass(type("Properties", tuple(property_classes), dict()))
+        property_class = dataclass(
+            type("Properties", tuple(property_classes), dict()))
         properties = structure(data, property_class)
         return properties
-
 
     def create_data(self, node, parent_nodes):
         result = NodeObjects()
 
         component = None
 
-
-        injector = Injector([self.node_data[parent].injectables for parent in parent_nodes])
+        injector = Injector(
+            [self.node_data[parent].injectables for parent in parent_nodes])
         result.injectables = injector.add_tag(node.tag)
         if node.tag == "application" and self.dependencies is None:
             self.dependencies = injector.get_dependencies(self)
             self.on_init()
         elif node.tag in _components:
             component_cls = _components[node.tag].component_class
-            properties = self.make_properties(component_cls, node, parent_nodes)
+            properties = self.make_properties(component_cls, node,
+                                              parent_nodes)
             dependencies = injector.get_dependencies(component_cls)
             component = component_cls(properties, dependencies)
         else:
@@ -391,7 +415,8 @@ class ComponentManager(PersistationManager):
             # todo: do we really want to overwrite the properties every time?
             # note: cattrs copies leaf attributes such as lists. This cause
             # not overwriting properties to not work as intended.
-            data.component.properties = self.make_properties(type(data.component), node, parent_nodes)
+            data.component.properties = self.make_properties(
+                type(data.component), node, parent_nodes)
             #pass
 
     def on_data_renewed(self, data, node, parent_nodes):
@@ -422,17 +447,20 @@ class ComponentManager(PersistationManager):
         for node in tree_dfs(node):
             if node is not None:
                 data = self.node_data.get(node)
-                print("  " * indent, "<%s>"%(node.tag))
+                print("  " * indent, "<%s>" % (node.tag))
                 if data and data.component:
                     component = data.component
                     for field in dataclasses.fields(component.properties):
-                        print("  " * (indent + 2), "%s: %s"%(field.name, getattr(component.properties, field.name)))
+                        print(
+                            "  " * (indent + 2), "%s: %s" %
+                            (field.name,
+                             getattr(component.properties, field.name)))
 
                 stack.append(node.tag)
                 indent += 1
             else:
                 indent -= 1
-                print("  " * indent, "</%s>"%(stack.pop()))
+                print("  " * indent, "</%s>" % (stack.pop()))
 
     def layout(self, node, parents):
         data = self.node_data.get(node)

@@ -12,7 +12,8 @@ from guimlcomponents.base.window import *
 
 from typing import Optional, Callable
 
-def escape( str_xml: str ):
+
+def escape(str_xml: str):
     str_xml = str_xml.replace("&", "&amp;")
     str_xml = str_xml.replace("<", "&lt;")
     str_xml = str_xml.replace(">", "&gt;")
@@ -20,23 +21,27 @@ def escape( str_xml: str ):
     str_xml = str_xml.replace("'", "&apos;")
     return str_xml
 
-def unescape( str_xml: str ):
+
+def unescape(str_xml: str):
     str_xml = str_xml.replace("&lt;", "<")
     str_xml = str_xml.replace("&gt;", ">")
-    str_xml = str_xml.replace( "&quot;", "\"")
+    str_xml = str_xml.replace("&quot;", "\"")
     str_xml = str_xml.replace("&apos;", "'")
     str_xml = str_xml.replace("&amp;", "&")
     return str_xml
 
+
 @injectable("window")
 class PangoContext(Injectable):
+
     @dataclass
     class Dependencies:
         canvas: Canvas
 
     def on_init(self):
         super().on_init()
-        subscription = self.canvas.on_context_change.subscribe(self.on_canvas_context_change)
+        subscription = self.canvas.on_context_change.subscribe(
+            self.on_canvas_context_change)
         self._on_context_change = subscription
 
     def on_destroy(self):
@@ -45,10 +50,14 @@ class PangoContext(Injectable):
     def on_canvas_context_change(self, context):
         self.context = pangocairo.create_context(context)
 
-TextExtents = namedtuple("TextExtents", 'x_bearing y_bearing width height x_advance y_advance')
+
+TextExtents = namedtuple(
+    "TextExtents", 'x_bearing y_bearing width height x_advance y_advance')
+
 
 def get_extent(text, font_size):
-    fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    fontFace = cairo.ToyFontFace("Arial", cairo.FONT_SLANT_NORMAL,
+                                 cairo.FONT_WEIGHT_NORMAL)
     fontMatrix = cairo.Matrix()
     fontMatrix.scale(font_size, font_size)
     user2device = cairo.Matrix()
@@ -57,8 +66,10 @@ def get_extent(text, font_size):
     font = cairo.ScaledFont(fontFace, fontMatrix, user2device, options)
     return TextExtents(*font.text_extents(text))
 
+
 @component("text")
 class Text(DrawableComponent, Subscriber):
+
     @dataclass
     class Properties(DrawableComponent.Properties):
         text: str = ''
@@ -79,7 +90,6 @@ class Text(DrawableComponent, Subscriber):
         self.subscribe('on_mouse_drag', self.dependencies.mouse_control)
 
         self.last_click_index = None
-
 
     def on_destroy(self):
         self.cancel_subscriptions()
@@ -117,8 +127,8 @@ class Text(DrawableComponent, Subscriber):
 
     def has_selection(self):
         return (self.selection_start is not None
-            and self.selection_end is not None
-            and self.selection_start != self.selection_end)
+                and self.selection_end is not None
+                and self.selection_start != self.selection_end)
 
     def add_selection(self, text):
         if self.has_selection():
@@ -146,10 +156,8 @@ class Text(DrawableComponent, Subscriber):
         didhit = pango_c.pango_layout_xy_to_index(
             self.get_layout().pointer,
             pango.units_from_double(x - self.properties.position.left),
-            pango.units_from_double(y - self.properties.position.top),
-            index,
-            trailing
-        )
+            pango.units_from_double(y - self.properties.position.top), index,
+            trailing)
 
         # Index is now the index of the character pressed. For positioning
         # cursor and selection we want to move the cursor by one position if
@@ -158,10 +166,8 @@ class Text(DrawableComponent, Subscriber):
 
         pos = pango.Rectangle()
 
-        pango_c.pango_layout_index_to_pos(
-            self.get_layout().pointer,
-            index,
-            pos.pointer)
+        pango_c.pango_layout_index_to_pos(self.get_layout().pointer, index,
+                                          pos.pointer)
 
         hitpos = pango.units_from_double(x - self.properties.position.left)
         hitp = (hitpos - pos.x) / (pos.width)
@@ -177,7 +183,8 @@ class Text(DrawableComponent, Subscriber):
             self.last_click_index = None
             return
 
-        self.last_click_index = self.byte_index_to_str_index(self.index_from_position(x, y))
+        self.last_click_index = self.byte_index_to_str_index(
+            self.index_from_position(x, y))
         self.selection_start = self.last_click_index
         self.selection_end = None
 
@@ -185,7 +192,8 @@ class Text(DrawableComponent, Subscriber):
         if self.last_click_index is None:
             return
 
-        self.last_click_index = self.byte_index_to_str_index(self.index_from_position(x, y))
+        self.last_click_index = self.byte_index_to_str_index(
+            self.index_from_position(x, y))
         if self.last_click_index is not None:
             self.selection_end = self.last_click_index
 
@@ -205,16 +213,19 @@ class Text(DrawableComponent, Subscriber):
         super().on_draw(context)
 
         with context:
-            context.move_to(self.properties.position.left, self.properties.position.top)
+            context.move_to(self.properties.position.left,
+                            self.properties.position.top)
             pat = cairo.SolidPattern(0, 0, 0, 1)
             context.set_source(pat)
 
             layout = self.get_layout()
             pangocairo.show_layout(context, layout)
 
+
 #     template = """<template><text py_text="self.escaped_text"></text></template>"""
-@component(name = "input")
+@component(name="input")
 class RawInput(Text):
+
     @dataclass
     class Properties(Text.Properties):
         text: str = None
@@ -270,7 +281,8 @@ class RawInput(Text):
             if self.has_selection():
                 self.remove_selection()
 
-            self.text = self.text[:self.cursor_position] + text + self.text[self.cursor_position:]
+            self.text = self.text[:self.cursor_position] + text + self.text[
+                self.cursor_position:]
             self.cursor_position += len(text)
 
             if self.properties.on_text is not None:
@@ -287,11 +299,14 @@ class RawInput(Text):
             weak_cursor = pango.Rectangle()
 
             byte_cursor = self.str_index_to_byte_index(self.cursor_position)
-            pango_c.pango_layout_get_cursor_pos(
-                layout.pointer, byte_cursor, strong_cursor.pointer, weak_cursor.pointer)
+            pango_c.pango_layout_get_cursor_pos(layout.pointer, byte_cursor,
+                                                strong_cursor.pointer,
+                                                weak_cursor.pointer)
 
-            left = pango.units_to_double(strong_cursor.x) + self.properties.position.left
-            top = pango.units_to_double(strong_cursor.y) + self.properties.position.top
+            left = pango.units_to_double(
+                strong_cursor.x) + self.properties.position.left
+            top = pango.units_to_double(
+                strong_cursor.y) + self.properties.position.top
             width = 2
             height = pango.units_to_double(strong_cursor.height)
 
@@ -314,10 +329,8 @@ class RawInput(Text):
 
     def is_remove_selection(self, motion):
         return (self.selection_start is not None
-            and (
-                motion == pyglet_key.MOTION_BACKSPACE
-                or motion == pyglet_key.MOTION_DELETE
-            ))
+                and (motion == pyglet_key.MOTION_BACKSPACE
+                     or motion == pyglet_key.MOTION_DELETE))
 
     def on_mouse_press(self, x, y, button, modifiers):
         super().on_mouse_press(x, y, button, modifiers)
@@ -331,7 +344,6 @@ class RawInput(Text):
         if self.last_click_index is not None:
             self.cursor_position = self.last_click_index
 
-
     def on_text_motion(self, motion):
         if self.is_remove_selection(motion):
             self.remove_selection()
@@ -340,11 +352,13 @@ class RawInput(Text):
             self.selection_end = None
             if motion == pyglet_key.MOTION_BACKSPACE:
                 if self.cursor_position > 0:
-                    self.text = self.text[:self.cursor_position - 1] + self.text[self.cursor_position:]
+                    self.text = self.text[:self.cursor_position -
+                                          1] + self.text[self.cursor_position:]
                     self.cursor_position -= 1
                     self.cursor_position = max(self.cursor_position, 0)
             elif motion == pyglet_key.MOTION_DELETE:
-                self.text = self.text[:self.cursor_position] + self.text[self.cursor_position + 1:]
+                self.text = self.text[:self.cursor_position] + self.text[
+                    self.cursor_position + 1:]
             else:
                 self.update_cursor_position(motion)
 
