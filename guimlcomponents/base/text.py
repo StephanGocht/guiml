@@ -1,14 +1,26 @@
+from dataclasses import dataclass
+from collections import namedtuple
+
 import cairocffi as cairo
 import pangocffi as pango
 import pangocairocffi as pangocairo
-
 from pangocffi import pango as pango_c
 
-from collections import namedtuple
+from pyglet.window import key as pyglet_key
 from guiml.registry import component
 
-from guimlcomponents.base.container import *
-from guimlcomponents.base.window import *
+# from guimlcomponents.base.container import *
+# from guimlcomponents.base.window import
+
+from guimlcomponents.base.container import DrawableComponent
+
+from guimlcomponents.base.window import (
+        Canvas,
+        MouseControl,
+        TextControl
+    )
+
+from guiml.injectables import Injectable, injectable, Subscriber
 
 from typing import Optional, Callable
 
@@ -135,7 +147,8 @@ class Text(DrawableComponent, Subscriber):
             start = min(self.selection_start, self.selection_end)
             stop = max(self.selection_start, self.selection_end)
 
-            return f'{text[:start]}<span fgcolor="white" bgcolor="blue">{text[start:stop]}</span>{text[stop:]}'
+            return (f'{text[:start]}<span fgcolor="white" bgcolor="blue">'
+                    f'{text[start:stop]}</span>{text[stop:]}')
         else:
             return text
 
@@ -222,7 +235,7 @@ class Text(DrawableComponent, Subscriber):
             pangocairo.show_layout(context, layout)
 
 
-#     template = """<template><text py_text="self.escaped_text"></text></template>"""
+# template = """<template><text py_text="self.escaped_text"></text></template>"""  # noqa: E501
 @component(name="input")
 class RawInput(Text):
 
@@ -328,7 +341,7 @@ class RawInput(Text):
             self.cursor_position = len(self.text)
 
     def is_remove_selection(self, motion):
-        return (self.selection_start is not None
+        return (self.has_selection()
                 and (motion == pyglet_key.MOTION_BACKSPACE
                      or motion == pyglet_key.MOTION_DELETE))
 

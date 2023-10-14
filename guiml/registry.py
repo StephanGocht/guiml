@@ -11,7 +11,7 @@ _injectables = defaultdict(list)
 
 @dataclass
 class ComponentMetaProperties:
-    component_class: Type['Component']
+    component_class: Type['Component']  # noqa: F821
     name: str
     template: Optional[str] = None
     template_file: Optional[str] = None

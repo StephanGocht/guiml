@@ -1,13 +1,11 @@
-from guiml._components import Component
-
 from dataclasses import dataclass, field
 from typing import Optional, Callable
-from collections import namedtuple
 
+import cairocffi as cairo
+
+from guiml._components import Component
 from guiml.registry import component
-from guiml.injectables import UILoop
-
-from guimlcomponents.base.window import *
+from guimlcomponents.base.window import Canvas, MouseControl
 
 
 @dataclass
@@ -43,7 +41,10 @@ class Rectangle:
         return self.bottom - self.top
 
     def is_inside(self, x, y):
-        return self.left <= x and x <= self.right and self.top <= y and y <= self.bottom
+        return (self.left <= x
+                and x <= self.right
+                and self.top <= y
+                and y <= self.bottom)
 
 
 class Container(Component):
@@ -71,8 +72,8 @@ class DrawableComponent(Container):
 
     def on_init(self):
         super().on_init()
-        self._canvas_on_draw_subscription = self.dependencies.canvas.on_draw.subscribe(
-            self.on_draw)
+        self._canvas_on_draw_subscription = \
+            self.dependencies.canvas.on_draw.subscribe(self.on_draw)
 
     def on_draw(self, context):
         if self.properties.draw_bounding_box:
@@ -109,10 +110,25 @@ class Div(DrawableComponent):
     @property
     def content_position(self):
         bwidth = self.properties.border.width / 2
-        top = self.properties.position.top + self.properties.margin.top + bwidth + self.properties.padding.top
-        left = self.properties.position.left + self.properties.margin.left + bwidth + self.properties.padding.left
-        bottom = self.properties.position.bottom - self.properties.margin.bottom - bwidth - self.properties.padding.bottom
-        right = self.properties.position.right - self.properties.margin.right - bwidth - self.properties.padding.right
+        top = (self.properties.position.top
+               + self.properties.margin.top
+               + bwidth
+               + self.properties.padding.top)
+
+        left = (self.properties.position.left
+                + self.properties.margin.left
+                + bwidth
+                + self.properties.padding.left)
+
+        bottom = (self.properties.position.bottom
+                  - self.properties.margin.bottom
+                  - bwidth
+                  - self.properties.padding.bottom)
+
+        right = (self.properties.position.right
+                 - self.properties.margin.right
+                 - bwidth
+                 - self.properties.padding.right)
 
         return Rectangle(top, left, bottom, right)
 
@@ -121,10 +137,21 @@ class Div(DrawableComponent):
             ctx.new_path()
 
             bwidth = self.properties.border.width / 2
-            top = self.properties.position.top + self.properties.margin.top + bwidth
-            left = self.properties.position.left + self.properties.margin.left + bwidth
-            bottom = self.properties.position.bottom - self.properties.margin.bottom - bwidth
-            right = self.properties.position.right - self.properties.margin.right - bwidth
+            top = (self.properties.position.top
+                   + self.properties.margin.top
+                   + bwidth)
+
+            left = (self.properties.position.left
+                    + self.properties.margin.left
+                    + bwidth)
+
+            bottom = (self.properties.position.bottom
+                      - self.properties.margin.bottom
+                      - bwidth)
+
+            right = (self.properties.position.right
+                     - self.properties.margin.right
+                     - bwidth)
 
             ctx.rectangle(left, top, right - left, bottom - top)
             ctx.set_line_width(self.properties.border.width)
@@ -163,6 +190,6 @@ class Button(Div):
 
     def on_mouse_release(self, x, y, button, modifiers):
         position = self.properties.position
-        if position.left <= x and x <= position.right and position.top <= y and y <= position.bottom:
+        if position.is_inside(x, y):
             if self.properties.on_click:
                 self.properties.on_click()

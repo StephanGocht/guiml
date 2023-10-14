@@ -54,7 +54,6 @@ class TextTransformer:
     def addText(self, element, text, position):
         if text:
             text = text.strip()
-            # todo replace new line with space and condense space to single space
 
         if text:
             self.modified = True
@@ -228,30 +227,30 @@ class ControlTransformer:
         return modified
 
     def __call__(self, node, component):
-        context = {"self": component}
+        # context = {"self": component}
         # node.set(CONTEXT_ATTRIBUTE, context)
         # node.set(CLEAR_CONTEXT_ATTRIBUTE, True)
 
         return self.transform(node, {"self": component})
 
-    @classmethod
-    def iter_context(cls, node):
-        contexts = list()
+    # @classmethod
+    # def iter_context(cls, node):
+    #     contexts = list()
 
-        for node in tree_dfs(node):
-            if node is None:
-                contexts.pop()
-            else:
-                new_context = node.get(CONTEXT_ATTRIBUTE, None)
-                clear_context = node.get(CLEAR_CONTEXT_ATTRIBUTE, False)
+    #     for node in tree_dfs(node):
+    #         if node is None:
+    #             contexts.pop()
+    #         else:
+    #             new_context = node.get(cls.CONTEXT_ATTRIBUTE, None)
+    #             clear_context = node.get(cls.CLEAR_CONTEXT_ATTRIBUTE, False)
 
-                if new_context:
-                    if clear_context:
-                        contexts.push(new_context)
-                    else:
-                        contexts.push({**contexts[-1], **new_context})
-                else:
-                    if clear_context:
-                        contexts.push({})
+    #             if new_context:
+    #                 if clear_context:
+    #                     contexts.push(new_context)
+    #                 else:
+    #                     contexts.push({**contexts[-1], **new_context})
+    #             else:
+    #                 if clear_context:
+    #                     contexts.push({})
 
-            yield node, contexts[-1]
+    #         yield node, contexts[-1]

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from guiml.registry import layout
 
 
@@ -18,9 +18,6 @@ class HorizontalFlow:
 
     def layout(self, children):
         position = self.component.content_position
-
-        width = position.width
-        height = position.height
 
         posx = position.left
         posy = position.top
@@ -69,10 +66,13 @@ class GridLayout:
         width = position.right - position.left
         height = position.bottom - position.top
 
-        col2pos = lambda col: (col * width / self.component.properties.cols
-                               ) + position.left
-        row2pos = lambda row: (row * height / self.component.properties.rows
-                               ) + position.top
+        def col2pos(col):
+            return ((col * width / self.component.properties.cols)
+                    + position.left)
+
+        def row2pos(row):
+            return ((row * height / self.component.properties.rows)
+                    + position.top)
 
         for i, child in enumerate(children):
             child_pos = child.properties.position

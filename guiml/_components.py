@@ -27,9 +27,11 @@ class AsMemberMixin:
     """Inheriting from this class allows to access properties and dependencies
     directly as members.
 
-    For example, when inheriting from AsMemberMixin, you can use self.position instead of self.properties.position
+    For example, when inheriting from AsMemberMixin, you can use self.position
+    instead of self.properties.position
 
-    If a propertie and a dependencie has the same name, then the property has precedence.
+    If a propertie and a dependencie has the same name, then the property has
+    precedence.
 
     """
 

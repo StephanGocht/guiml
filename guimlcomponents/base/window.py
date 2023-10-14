@@ -1,13 +1,12 @@
 from guiml._components import Component
 from guiml.registry import component
-from guiml.injectables import *
+from guiml.injectables import Observable, Injectable, injectable, UILoop
 import cairocffi as cairo
 import functools
 from dataclasses import dataclass
 import pyglet
 import ctypes
-from pyglet import app, clock, gl, image, window
-from pyglet.window import key as pyglet_key
+from pyglet import gl, image
 
 
 @injectable("window")

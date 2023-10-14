@@ -1,6 +1,5 @@
 import dataclasses
 from dataclasses import dataclass
-from collections import defaultdict
 
 from typing import Optional
 import typing
@@ -105,10 +104,10 @@ class Injector:
         self.injectables.append(result)
 
         to_add = DependencyResolver(_injectables[tag])
-        for injectable in to_add:
-            if injectable not in self:
-                result[injectable] = injectable(
-                    self.get_dependencies(injectable))
+        for injectable_cls in to_add:
+            if injectable_cls not in self:
+                result[injectable_cls] = injectable_cls(
+                    self.get_dependencies(injectable_cls))
 
         return result
 

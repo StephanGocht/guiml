@@ -1,21 +1,19 @@
-import ctypes
-import cairo
-import xml.etree.ElementTree as ET
-import yaml
-from cattrs.preconf.pyyaml import make_converter
-from dataclasses import dataclass, field
 import dataclasses
-from pyglet import app, clock, gl, image, window
-import os
-
+import copy
 import typing
-from typing import Optional, Any
 
+from dataclasses import dataclass
+from typing import Optional, Any
 from collections import defaultdict, namedtuple
 
 from guiml.filecache import StyleLoader, MarkupLoader
 
-from guiml.transformer import *
+from guiml.transformer import (
+    DynamicDOM,
+    TemplatesTransformer,
+    ControlTransformer,
+    TextTransformer,
+)
 
 from guiml.registry import _components, _layouts
 from guiml.injectables import Injector, UILoop
@@ -24,8 +22,9 @@ import logging
 
 # by importing guiml plugins we trigger plugin detection and will load all
 # components
-import guiml.plugins
-import guiml.layout
+from guiml.plugins import detect_modules
+
+detect_modules()
 
 
 def tree_dfs(node):
@@ -119,7 +118,8 @@ class PersistationManager():
 
     @dataclass
     class DataNode:
-        children: dict[str, PersistationStrategy] = field(default_factory=dict)
+        children: dict[str, PersistationStrategy] = \
+            dataclasses.field(default_factory=dict)
         data: Any = None
 
     def __init__(self):
@@ -202,13 +202,8 @@ class PersistationManager():
 
 @dataclass
 class NodeObjects:
-    component: "Optional[Component]" = None
+    component: "Optional[Component]" = None  # noqa: F821
     injectables: Optional[dict] = None
-
-    def on_destroy(self):
-        component.on_destroy()
-        for injectable in injectables.items():
-            injectable.on_destroy()
 
 
 def make_intermediate_dataclass(base, properties):
@@ -329,8 +324,8 @@ class ComponentManager(PersistationManager):
     def on_init(self):
         # on_init is called when application tag is encountered
 
-        self._update_subscription = self.dependencies.ui_loop.on_update.subscribe(
-            self.on_update)
+        self._update_subscription = \
+            self.dependencies.ui_loop.on_update.subscribe(self.on_update)
 
     def on_destroy(self):
         self._update_subscription.cancel()
@@ -417,7 +412,7 @@ class ComponentManager(PersistationManager):
             # not overwriting properties to not work as intended.
             data.component.properties = self.make_properties(
                 type(data.component), node, parent_nodes)
-            #pass
+            # pass
 
     def on_data_renewed(self, data, node, parent_nodes):
         self.node_data[node] = data

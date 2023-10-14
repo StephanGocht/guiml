@@ -12,7 +12,13 @@ def iter_namespace(ns_pkg):
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
-component_modules = {
-    name: importlib.import_module(name)
-    for finder, name, ispkg in iter_namespace(guimlcomponents)
-}
+component_modules = None
+
+
+def detect_modules():
+    global component_modules
+    if component_modules is None:
+        component_modules = {
+            name: importlib.import_module(name)
+            for finder, name, ispkg in iter_namespace(guimlcomponents)
+        }
