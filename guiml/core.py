@@ -450,6 +450,7 @@ class ComponentManager(PersistationManager):
         self.node_data = dict()
         self.renew(tree.getroot())
 
+        self.compute_recommended_size(tree.getroot())
         self.layout(tree.getroot())
 
         # self.dump_tree(tree.getroot())
@@ -475,17 +476,32 @@ class ComponentManager(PersistationManager):
                 indent -= 1
                 print("  " * indent, "</%s>" % (stack.pop()))
 
-    def layout(self, node):
+    def get_layouter(self, node):
         data = self.node_data.get(node)
-        layouter = data.layout if data else None
-        if layouter:
-            childs = list()
-            for child in node:
-                child_data = self.node_data.get(child)
-                if child_data and child_data.component:
-                    childs.append(child_data.component)
+        return data.layout if data else None
 
-            layouter.layout(childs)
+    def get_layout_children(self, node):
+        childs = list()
+        for child in node:
+            child_data = self.node_data.get(child)
+            if child_data and child_data.component:
+                childs.append(child_data.component)
+
+        return childs
+
+    def compute_recommended_size(self, node):
+        layouter = self.get_layouter(node)
+
+        for child in node:
+            self.compute_recommended_size(child)
+
+        if layouter:
+            layouter.compute_recommended_size(self.get_layout_children(node))
+
+    def layout(self, node):
+        layouter = self.get_layouter(node)
+        if layouter:
+            layouter.layout(self.get_layout_children(node))
 
         for child in node:
             self.layout(child)

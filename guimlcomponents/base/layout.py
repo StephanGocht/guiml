@@ -47,10 +47,11 @@ class Stack:
                 width += child.height
                 height = max(height, child.height)
 
-        result.width = width
-        result.height = height
+        wrap_size = self.component.wrap_size
+        result.width = width + wrap_size.left + wrap_size.right
+        result.height = height + wrap_size.top + wrap_size.bottom
 
-        return result
+        self.component.properties.position = result
 
     def layout(self, children):
         position = self.component.content_position
@@ -133,7 +134,12 @@ class Align:
         for child in children:
             result.width = max(result.width, child.width)
             result.height = max(result.height, child.height)
-        return result
+
+        wrap_size = self.component.wrap_size
+        result.width = result.width + wrap_size.left + wrap_size.right
+        result.height = result.height + wrap_size.top + wrap_size.bottom
+
+        self.component.properties.position = result
 
     def layout(self, children):
         position = self.component.content_position
@@ -188,20 +194,24 @@ class GridLayout:
         self.component = component
 
     def compute_recommended_size(self, children):
-        width = 0
-        height = 0
-        for child in children:
-            width = max(width, child.width / child.properties.colspan)
-            height = max(height, child.height / child.properties.rowspan)
+        if (self.component.properties.position.width != 0
+                and self.component.properties.position.height != 0):
+            return
+        else:
+            width = 0
+            height = 0
+            for child in children:
+                width = max(width, child.width / child.properties.colspan)
+                height = max(height, child.height / child.properties.rowspan)
 
-        result = Rectangle()
-        result.width = self.properties.cols * width
-        result.height = self.properties.rows * height
-        return result
+            result = Rectangle()
+            result.width = self.component.properties.cols * width
+            result.height = self.component.properties.rows * height
+
+            self.component.properties.position = result
 
     def layout(self, children):
         position = self.component.content_position
-
         assert (position.is_valid())
 
         width = position.right - position.left

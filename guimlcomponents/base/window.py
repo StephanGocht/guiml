@@ -52,17 +52,20 @@ class MouseControl(Injectable):
             prop = component.properties
             return (-prop.z_index, -prop.zz_index)
 
-        new_focus = min(self._hovers, key=get_key)
-        if new_focus != self.focus:
-            fn = getattr(self.focus, 'on_mouse_unfocus', None)
-            if fn is not None:
-                fn()
+        if not self._hovers:
+            new_focus = None
+        else:
+            new_focus = min(self._hovers, key=get_key)
+            if new_focus != self.focus:
+                fn = getattr(self.focus, 'on_mouse_unfocus', None)
+                if fn is not None:
+                    fn()
 
-            fn = getattr(new_focus, 'on_mouse_focus', None)
-            if fn is not None:
-                fn()
+                fn = getattr(new_focus, 'on_mouse_focus', None)
+                if fn is not None:
+                    fn()
 
-            self.focus = new_focus
+                self.focus = new_focus
 
 
 @injectable("window")
