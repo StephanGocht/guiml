@@ -17,7 +17,7 @@ from pyglet import app
 
 def main():
     ComponentManager("root.xml")
-    app.run(interval=1 / 120)
+    app.run(interval=1 / 32)
 
 
 if __name__ == '__main__':

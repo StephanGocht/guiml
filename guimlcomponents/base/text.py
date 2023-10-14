@@ -166,7 +166,7 @@ class Text(UIComponent):
         index = pango.ffi.new("int *")
         trailing = pango.ffi.new("int *")
 
-        didhit = pango_c.pango_layout_xy_to_index(
+        didhit = pango_c.pango_layout_xy_to_index(  # noqa: F841
             self.get_layout().pointer,
             pango.units_from_double(x - self.properties.position.left),
             pango.units_from_double(y - self.properties.position.top), index,

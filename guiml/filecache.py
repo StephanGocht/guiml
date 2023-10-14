@@ -32,7 +32,7 @@ class StyleLoader(LazyFileLoader):
 
     def load(self):
         with open(self.filename, "r") as f:
-            self.data = yaml.load(f, Loader=yaml.BaseLoader)
+            self.data = yaml.load(f, Loader=yaml.SafeLoader)
 
         if self.data is None:
             # the file was empty

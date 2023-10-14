@@ -1,9 +1,117 @@
+import copy
 from dataclasses import dataclass
+
 from guiml.registry import layout
 
+from guimlcomponents.base.container import Rectangle
 
-@layout("hflow")
-class HorizontalFlow:
+
+@layout("stack")
+class Stack:
+    """
+    Stack intrinsically sized components.
+    """
+    @dataclass
+    class Properties():
+        """
+        direction for stacking either vertical or horizontal
+        """
+        direction: str = 'vertical'
+
+    @dataclass
+    class ChildProperties():
+        """
+        gravity of stacked elements either left or right for vertical stacking
+        and top or bottom for horizontal stacking or stretch for both
+        """
+        gravity: str = 'center'
+
+    def __init__(self, component):
+        self.component = component
+
+        direction = self.component.properties.direction
+        if direction not in ['vertical', 'horizontal']:
+            raise ValueError(f'Invalid direction "{direction}".')
+
+    def compute_recommended_size(self, children):
+        result = Rectangle()
+        direction = self.component.properties.direction
+
+        width = 0
+        height = 0
+        for child in children:
+            if direction == 'vertical':
+                width = max(width, child.width)
+                height += child.height
+            elif direction == 'horizontal':
+                width += child.height
+                height = max(height, child.height)
+
+        result.width = width
+        result.height = height
+
+        return result
+
+    def layout(self, children):
+        position = self.component.content_position
+        center_y = position.top + position.height / 2
+        center_x = position.left + position.width / 2
+
+        direction = self.component.properties.direction
+
+        if direction == 'vertical':
+            next_pos = position.top
+        elif direction == 'horizontal':
+            next_pos = position.left
+
+        for child in children:
+            child_pos = copy.copy(child.properties.position)
+            gravity = child.properties.gravity
+
+            if direction == 'vertical':
+                child_pos.top = next_pos
+                next_pos += child.height
+                if gravity == 'left' or gravity == 'stretch':
+                    child_pos.left = position.left
+                elif gravity == 'right':
+                    child_pos.left = position.right - child.width
+                elif gravity == 'center':
+                    child_pos.left = center_x - child.width / 2
+                else:
+                    raise ValueError(f'Invalid gravity "{gravity}".')
+
+                if gravity == 'stretch':
+                    child_pos.right = position.right
+                else:
+                    child_pos.width = child.width
+                child_pos.height = child.height
+
+            elif direction == 'horizontal':
+                child_pos.left = next_pos
+                next_pos += child.width
+                if gravity == 'top' or gravity == 'stretch':
+                    child_pos.top = position.top
+                elif gravity == 'bottom':
+                    child_pos.top = position.bottom - child.height
+                elif gravity == 'center':
+                    child_pos.top = center_y - child.height / 2
+                else:
+                    raise ValueError(f'Invalid gravity "{gravity}".')
+
+                if gravity == 'stretch':
+                    child_pos.top = position.top
+                else:
+                    child_pos.height = child.height
+
+                child_pos.width = child.width
+
+            child.properties.position = child_pos
+
+
+@layout("align")
+class Align:
+    ALIGNMENTS = set(['top left', 'top', 'top right', 'left', 'center',
+                      'right', 'bottom left', 'bottom', 'bottom right'])
 
     @dataclass
     class Properties():
@@ -11,33 +119,54 @@ class HorizontalFlow:
 
     @dataclass
     class ChildProperties():
-        pass
+        """
+        alignment can be one of top left, top, top right, left, center, right,
+        bottom left, bottom, bottom right
+        """
+        alignment: str = 'center'
 
     def __init__(self, component):
         self.component = component
 
+    def compute_recommended_size(self, children):
+        result = Rectangle()
+        for child in children:
+            result.width = max(result.width, child.width)
+            result.height = max(result.height, child.height)
+        return result
+
     def layout(self, children):
         position = self.component.content_position
-
-        posx = position.left
-        posy = position.top
-        max_height = 0
+        center_y = position.top + position.height / 2
+        center_x = position.left + position.width / 2
 
         for child in children:
-            if posx + child.width > position.right:
-                posx = position.left
-                posy += max_height
-                max_height = 0
+            alignment = child.properties.alignment
 
-            position = child.properties.position
+            if alignment not in self.ALIGNMENTS:
+                raise RuntimeError(
+                    f"Recieved unknown alignment '{alignment}'.")
 
-            position.top = posy
-            position.left = posx
-            position.bottom = posy + child.height
-            position.right = posx + child.width
+            alignment = alignment.split(' ')
 
-            posx += child.width
-            max_height = max(max_height, child.height)
+            child_pos = copy.copy(child.properties.position)
+
+            child_pos.top = center_y - child.height / 2
+            child_pos.left = center_x - child.width / 2
+
+            if 'top' in alignment:
+                child_pos.top = position.top
+            if 'bottom' in alignment:
+                child_pos.top = position.bottom - child.height
+            if 'left' in alignment:
+                child_pos.left = position.left
+            if 'right' in alignment:
+                child_pos.left = position.right - child.width
+
+            child_pos.width = child.width
+            child_pos.height = child.height
+
+            child.properties.position = child_pos
 
 
 @layout("grid")
@@ -58,6 +187,18 @@ class GridLayout:
     def __init__(self, component):
         self.component = component
 
+    def compute_recommended_size(self, children):
+        width = 0
+        height = 0
+        for child in children:
+            width = max(width, child.width / child.properties.colspan)
+            height = max(height, child.height / child.properties.rowspan)
+
+        result = Rectangle()
+        result.width = self.properties.cols * width
+        result.height = self.properties.rows * height
+        return result
+
     def layout(self, children):
         position = self.component.content_position
 
@@ -75,7 +216,7 @@ class GridLayout:
                     + position.top)
 
         for i, child in enumerate(children):
-            child_pos = child.properties.position
+            child_pos = copy.copy(child.properties.position)
 
             child_pos.top = row2pos(child.properties.row)
             child_pos.bottom = row2pos(child.properties.row +
@@ -84,3 +225,5 @@ class GridLayout:
             child_pos.left = col2pos(child.properties.col)
             child_pos.right = col2pos(child.properties.col +
                                       child.properties.colspan)
+
+            child.properties.position = child_pos

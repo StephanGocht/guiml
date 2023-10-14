@@ -37,9 +37,17 @@ class Rectangle:
     def width(self):
         return self.right - self.left
 
+    @width.setter
+    def width(self, value):
+        self.right = self.left + value
+
     @property
     def height(self):
         return self.bottom - self.top
+
+    @height.setter
+    def height(self, value):
+        self.bottom = self.top + value
 
     def is_inside(self, x, y):
         return (self.left <= x
@@ -48,23 +56,12 @@ class Rectangle:
                 and y <= self.bottom)
 
 
-class Container(Component):
+class DrawableComponent(Component, Subscriber):
 
     @dataclass
     class Properties(Component.Properties):
-        # bounding box for registering clicks
+        # bounding box of the component
         position: Rectangle = field(default_factory=Rectangle)
-        layout: str = ""
-
-    @property
-    def content_position(self):
-        return self.properties.position
-
-
-class DrawableComponent(Container, Subscriber):
-
-    @dataclass
-    class Properties(Container.Properties):
         draw_bounding_box: bool = False
         z_index: int = 0
 
@@ -75,7 +72,7 @@ class DrawableComponent(Container, Subscriber):
         zz_index: int = 0
 
     @dataclass
-    class Dependencies(Container.Dependencies):
+    class Dependencies(Component.Dependencies):
         canvas: Canvas
 
     def on_init(self):
@@ -166,15 +163,10 @@ class UIComponent(InteractiveComponent):
     pass
 
 
-@component("div")
-class Div(UIComponent):
-
+class Container(UIComponent):
     @dataclass
     class Properties(UIComponent.Properties):
-        border: Border = field(default_factory=Border)
-        margin: Rectangle = field(default_factory=Rectangle)
-        padding: Rectangle = field(default_factory=Rectangle)
-        background: Color = field(default_factory=Color)
+        layout: str = ""
 
     @dataclass
     class Dependencies(UIComponent.Dependencies):
@@ -182,26 +174,74 @@ class Div(UIComponent):
 
     @property
     def content_position(self):
-        bwidth = self.properties.border.width / 2
-        top = (self.properties.position.top
-               + self.properties.margin.top
-               + bwidth
+        return self.properties.position
+
+    @property
+    def wrap_size(self):
+        return Rectangle(0, 0, 0, 0)
+
+    @property
+    def width(self):
+        return self.properties.position.width
+
+    @property
+    def height(self):
+        return self.properties.position.height
+
+
+@component("div")
+class Div(Container):
+
+    @dataclass
+    class Properties(Container.Properties):
+        border: Border = field(default_factory=Border)
+        margin: Rectangle = field(default_factory=Rectangle)
+        padding: Rectangle = field(default_factory=Rectangle)
+        background: Color = field(default_factory=Color)
+
+    @dataclass
+    class Dependencies(Container.Dependencies):
+        pass
+
+    @property
+    def bwidth(self):
+        return self.properties.border.width / 2
+
+    @property
+    def wrap_size(self):
+        top = (self.properties.margin.top
+               + self.bwidth
                + self.properties.padding.top)
 
-        left = (self.properties.position.left
-                + self.properties.margin.left
-                + bwidth
+        left = (self.properties.margin.left
+                + self.bwidth
                 + self.properties.padding.left)
 
+        bottom = (self.properties.margin.bottom
+                  + self.bwidth
+                  + self.properties.padding.bottom)
+
+        right = (self.properties.margin.right
+                 + self.bwidth
+                 + self.properties.padding.right)
+
+        return Rectangle(top, left, bottom, right)
+
+    @property
+    def content_position(self):
+        wrap_size = self.wrap_size
+
+        top = (self.properties.position.top
+               + wrap_size.top)
+
+        left = (self.properties.position.left
+                + wrap_size.left)
+
         bottom = (self.properties.position.bottom
-                  - self.properties.margin.bottom
-                  - bwidth
-                  - self.properties.padding.bottom)
+                  - wrap_size.bottom)
 
         right = (self.properties.position.right
-                 - self.properties.margin.right
-                 - bwidth
-                 - self.properties.padding.right)
+                 - wrap_size.right)
 
         return Rectangle(top, left, bottom, right)
 
@@ -227,18 +267,19 @@ class Div(UIComponent):
                      - bwidth)
 
             ctx.rectangle(left, top, right - left, bottom - top)
-            ctx.set_line_width(self.properties.border.width)
-            color = self.properties.border.color
-            pat = cairo.SolidPattern(color.red, color.green, color.blue,
-                                     color.alpha)
-            ctx.set_source(pat)
-            ctx.stroke_preserve()
 
             color = self.properties.background
             pat = cairo.SolidPattern(color.red, color.green, color.blue,
                                      color.alpha)
             ctx.set_source(pat)
-            ctx.fill()
+            ctx.fill_preserve()
+
+            ctx.set_line_width(self.properties.border.width)
+            color = self.properties.border.color
+            pat = cairo.SolidPattern(color.red, color.green, color.blue,
+                                     color.alpha)
+            ctx.set_source(pat)
+            ctx.stroke()
 
         super().on_draw(ctx)
 

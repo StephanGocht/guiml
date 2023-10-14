@@ -26,7 +26,7 @@ $input_field:
 $add_button:
   row: 2
   col: 0
-  layout: hflow
+  layout: align
 
   border:
     width: 1
@@ -37,10 +37,10 @@ $add_button:
       alpha: 1
 
   margin:
-    top: 2
-    left: 2
-    right: 2
-    bottom: 2
+    top: 5
+    left: 5
+    right: 5
+    bottom: 5
 
   padding:
     top: 2
@@ -48,11 +48,15 @@ $add_button:
     right: 2
     bottom: 2
 
-$todo_mark:
-  layout: hflow
+button.hover:
+  background:
+    red: 0.92
+    green: 0.92
+    blue: 0.92
+    alpha: 1.
 
-  col: 0
-  row: 1
+$button_text:
+  alignment: center
 
 $todolist:
   col: 0
@@ -62,16 +66,13 @@ $todolist:
   rows: 1
   cols: 1
 
-.list:
-  layout: grid
-  cols: 1
+.todolist:
+  layout: stack
 
-.listrow:
-  layout: hflow
+.todoitem:
+  gravity: left
 
 input:
-  layout: hflow
-
   background:
     red: 1
     green: 1
@@ -99,7 +100,7 @@ input:
     bottom: 2
 
 .mouse_focus:
-  draw_bounding_box: True
+  draw_bounding_box: true
 
 input:
   cursor: text
