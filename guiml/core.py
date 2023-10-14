@@ -203,6 +203,7 @@ class PersistationManager():
 @dataclass
 class NodeObjects:
     component: "Optional[Component]" = None  # noqa: F821
+    layout: "Optional[Layout]" = None  # noqa: F821
     injectables: Optional[dict] = None
 
 
@@ -392,10 +393,16 @@ class ComponentManager(PersistationManager):
         properties = structure(data, property_class)
         return properties
 
+    def make_layout(self, component):
+        layout_cls = getattr(component.properties, "layout", None)
+        if layout_cls:
+            layout_cls = _layouts[layout_cls]
+            return layout_cls(component)
+        else:
+            return None
+
     def create_data(self, node, parent_nodes):
         result = NodeObjects()
-
-        component = None
 
         injector = Injector(
             [self.node_data[parent].injectables for parent in parent_nodes])
@@ -408,11 +415,11 @@ class ComponentManager(PersistationManager):
             properties = self.make_properties(component_cls, node,
                                               parent_nodes)
             dependencies = injector.get_dependencies(component_cls)
-            component = component_cls(properties, dependencies)
+            result.component = component_cls(properties, dependencies)
+            result.layout = self.make_layout(result.component)
         else:
             log_unknown_component(node.tag)
 
-        result.component = component
         return result
 
     def destroy_data(self, data):
@@ -443,7 +450,7 @@ class ComponentManager(PersistationManager):
         self.node_data = dict()
         self.renew(tree.getroot())
 
-        self.layout(tree.getroot(), [])
+        self.layout(tree.getroot())
 
         # self.dump_tree(tree.getroot())
 
@@ -468,28 +475,17 @@ class ComponentManager(PersistationManager):
                 indent -= 1
                 print("  " * indent, "</%s>" % (stack.pop()))
 
-    def layout(self, node, parents):
+    def layout(self, node):
         data = self.node_data.get(node)
-        component = data.component if data else None
-        if component:
-            component = data.component
-            layout_cls = getattr(component.properties, "layout", None)
-            if layout_cls:
-                layout_cls = _layouts[layout_cls]
-                layouter = layout_cls(component)
+        layouter = data.layout if data else None
+        if layouter:
+            childs = list()
+            for child in node:
+                child_data = self.node_data.get(child)
+                if child_data and child_data.component:
+                    childs.append(child_data.component)
 
-                childs = list()
-                for child in node:
-                    child_data = self.node_data.get(child)
-                    if child_data and child_data.component:
-                        childs.append(child_data.component)
-
-                layouter.layout(childs)
-
-            parents.append(component)
+            layouter.layout(childs)
 
         for child in node:
-            self.layout(child, parents)
-
-        if component:
-            parents.pop()
+            self.layout(child)
