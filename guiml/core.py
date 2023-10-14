@@ -330,18 +330,29 @@ class ComponentManager(PersistationManager):
     def on_destroy(self):
         self._update_subscription.cancel()
 
-    def collect_properties(self, node):
+    def collect_properties(self, node, additional_classes):
         data = {}
         data = merge_data(data, self.style.get(node.tag, {}))
 
-        classes = node.get("class")
+        classes = list()
+
+        if additional_classes:
+            classes.extend(additional_classes)
+
+        node_classes = node.get("class")
+        if node_classes:
+            classes.extend(node_classes.split(" "))
+
         if classes:
-            classes = classes.split(" ")
             # let earlier mention have precedence
             classes.reverse()
+
             for style_class in classes:
+                # todo: we need some way to match multiple classes / tags
                 data = merge_data(data,
                                   self.style.get(".%s" % (style_class), {}))
+                data = merge_data(data,
+                                  self.style.get("%s.%s" % (node.tag, style_class), {}))
 
         tag_id = node.get("id")
         if tag_id:
@@ -351,8 +362,10 @@ class ComponentManager(PersistationManager):
 
         return data
 
-    def make_properties(self, component_cls, node, parents):
-        data = self.collect_properties(node)
+    def make_properties(self, component_cls, node, parents,
+                        additional_classes=None):
+        data = self.collect_properties(node, additional_classes)
+        data['zz_index'] = len(parents)
 
         property_classes = [component_cls.Properties]
 
@@ -408,11 +421,9 @@ class ComponentManager(PersistationManager):
     def on_data_restored(self, data, node, parent_nodes):
         if data.component:
             # todo: do we really want to overwrite the properties every time?
-            # note: cattrs copies leaf attributes such as lists. This cause
-            # not overwriting properties to not work as intended.
             data.component.properties = self.make_properties(
-                type(data.component), node, parent_nodes)
-            # pass
+                type(data.component), node, parent_nodes,
+                data.component.style_classes)
 
     def on_data_renewed(self, data, node, parent_nodes):
         self.node_data[node] = data

@@ -14,6 +14,7 @@ class Component:
     def __init__(self, properties, dependencies):
         self.properties = properties
         self.dependencies = dependencies
+        self.style_classes = set()
         self.on_init()
 
     def on_init(self):

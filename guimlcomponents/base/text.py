@@ -12,7 +12,7 @@ from guiml.registry import component
 # from guimlcomponents.base.container import *
 # from guimlcomponents.base.window import
 
-from guimlcomponents.base.container import DrawableComponent
+from guimlcomponents.base.container import UIComponent
 
 from guimlcomponents.base.window import (
         Canvas,
@@ -20,7 +20,7 @@ from guimlcomponents.base.window import (
         TextControl
     )
 
-from guiml.injectables import Injectable, injectable, Subscriber
+from guiml.injectables import Injectable, injectable
 
 from typing import Optional, Callable
 
@@ -80,15 +80,15 @@ def get_extent(text, font_size):
 
 
 @component("text")
-class Text(DrawableComponent, Subscriber):
+class Text(UIComponent):
 
     @dataclass
-    class Properties(DrawableComponent.Properties):
+    class Properties(UIComponent.Properties):
         text: str = ''
         apply_markup: bool = True
 
     @dataclass
-    class Dependencies(DrawableComponent.Dependencies):
+    class Dependencies(UIComponent.Dependencies):
         pango: PangoContext
         mouse_control: MouseControl
 
@@ -182,10 +182,11 @@ class Text(DrawableComponent, Subscriber):
         pango_c.pango_layout_index_to_pos(self.get_layout().pointer, index,
                                           pos.pointer)
 
-        hitpos = pango.units_from_double(x - self.properties.position.left)
-        hitp = (hitpos - pos.x) / (pos.width)
-        if hitp > 0.6:
-            index += 1
+        if pos.width > 0:
+            hitpos = pango.units_from_double(x - self.properties.position.left)
+            hitp = (hitpos - pos.x) / (pos.width)
+            if hitp > 0.6:
+                index += 1
 
         return index
 
@@ -304,8 +305,6 @@ class RawInput(Text):
     def on_draw(self, context):
         self.cursor_position = min(self.cursor_position, len(self.text))
 
-        super().on_draw(context)
-
         with context:
             layout = self.get_layout()
             strong_cursor = pango.Rectangle()
@@ -327,6 +326,8 @@ class RawInput(Text):
             pat = cairo.SolidPattern(0, 0, 0, 1)
             context.set_source(pat)
             context.fill()
+
+        super().on_draw(context)
 
     def update_cursor_position(self, motion):
         if motion == pyglet_key.MOTION_LEFT:

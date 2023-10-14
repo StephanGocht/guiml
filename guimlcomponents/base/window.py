@@ -34,6 +34,36 @@ class MouseControl(Injectable):
         self.on_mouse_leave = Observable()
         self.on_mouse_scroll = Observable()
 
+        self.on_mouse_motion.post_call = self.compute_focus
+
+        self.set_cursor = None
+
+        self.focus = None
+        self._hovers = set()
+
+    def focus_enter(self, value):
+        self._hovers.add(value)
+
+    def focus_exit(self, value):
+        self._hovers.discard(value)
+
+    def compute_focus(self, x, y, dx, dy):
+        def get_key(component):
+            prop = component.properties
+            return (-prop.z_index, -prop.zz_index)
+
+        new_focus = min(self._hovers, key=get_key)
+        if new_focus != self.focus:
+            fn = getattr(self.focus, 'on_mouse_unfocus', None)
+            if fn is not None:
+                fn()
+
+            fn = getattr(new_focus, 'on_mouse_focus', None)
+            if fn is not None:
+                fn()
+
+            self.focus = new_focus
+
 
 @injectable("window")
 class TextControl(Injectable):
@@ -67,7 +97,7 @@ class Window(Component):
         super().on_init()
         self.init_window()
         self.init_canvas()
-        self.register_mouse_events()
+        self.setup_mouse_control()
 
         self.fps_display = pyglet.window.FPSDisplay(window=self.window)
 
@@ -80,6 +110,16 @@ class Window(Component):
 
     def on_text(self, text):
         self.dependencies.text_control.on_text(text)
+
+    def set_mouse_cursor(self, value):
+        cursor = self.window.get_system_mouse_cursor(value)
+        self.window.set_mouse_cursor(cursor)
+
+    def setup_mouse_control(self):
+        self.register_mouse_events()
+
+        mouse_control = self.dependencies.mouse_control
+        mouse_control.set_cursor = self.set_mouse_cursor
 
     def register_mouse_events(self):
         mouse_events = [

@@ -149,10 +149,18 @@ class Observable:
 
     def __init__(self):
         self.callbacks = list()
+        self.pre_call = None
+        self.post_call = None
 
     def __call__(self, *args, **kwargs):
+        if self.pre_call is not None:
+            self.pre_call(*args, **kwargs)
+
         for callback in self.callbacks:
             callback(*args, **kwargs)
+
+        if self.post_call is not None:
+            self.post_call(*args, **kwargs)
 
     def subscribe(self, callback):
         self.callbacks.append(callback)

@@ -69,9 +69,6 @@ $todolist:
 .listrow:
   layout: hflow
 
-text:
-  draw_bounding_box: True
-
 input:
   layout: hflow
 
@@ -100,3 +97,13 @@ input:
     left: 4
     right: 4
     bottom: 2
+
+.mouse_focus:
+  draw_bounding_box: True
+
+input:
+  cursor: text
+
+
+text:
+  cursor: text

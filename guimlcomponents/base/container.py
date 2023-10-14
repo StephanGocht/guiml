@@ -5,6 +5,7 @@ import cairocffi as cairo
 
 from guiml._components import Component
 from guiml.registry import component
+from guiml.injectables import Subscriber
 from guimlcomponents.base.window import Canvas, MouseControl
 
 
@@ -50,7 +51,7 @@ class Rectangle:
 class Container(Component):
 
     @dataclass
-    class Properties:
+    class Properties(Component.Properties):
         # bounding box for registering clicks
         position: Rectangle = field(default_factory=Rectangle)
         layout: str = ""
@@ -60,20 +61,26 @@ class Container(Component):
         return self.properties.position
 
 
-class DrawableComponent(Container):
+class DrawableComponent(Container, Subscriber):
 
     @dataclass
     class Properties(Container.Properties):
         draw_bounding_box: bool = False
+        z_index: int = 0
+
+        """
+        zz_index contains the number of parents and will be set
+        automatically.
+        """
+        zz_index: int = 0
 
     @dataclass
-    class Dependencies:
+    class Dependencies(Container.Dependencies):
         canvas: Canvas
 
     def on_init(self):
         super().on_init()
-        self._canvas_on_draw_subscription = \
-            self.dependencies.canvas.on_draw.subscribe(self.on_draw)
+        self.subscribe('on_draw', self.dependencies.canvas)
 
     def on_draw(self, context):
         if self.properties.draw_bounding_box:
@@ -89,22 +96,88 @@ class DrawableComponent(Container):
                 context.stroke()
 
     def on_destroy(self):
-        self._canvas_on_draw_subscription.cancel()
+        self.cancel_subscriptions()
         super().on_destroy()
 
 
-@component("div")
-class Div(DrawableComponent):
+class InteractiveComponent(DrawableComponent):
+    STYLE_CLASS_HOVER = 'hover'
+    STYLE_CLASS_FOCUS = 'mouse_focus'
 
     @dataclass
     class Properties(DrawableComponent.Properties):
+        on_click: Optional[Callable] = None
+        cursor: Optional[str] = None
+
+    @dataclass
+    class Dependencies(DrawableComponent.Dependencies):
+        mouse_control: MouseControl
+
+    def on_init(self):
+        super().on_init()
+        self.subscribe('on_mouse_release', self.dependencies.mouse_control)
+        self.subscribe('on_mouse_motion', self.dependencies.mouse_control)
+        self._hover = False
+
+    def on_mouse_enter(self):
+        self._hover = True
+        self.style_classes.add(self.STYLE_CLASS_HOVER)
+
+        mouse_control = self.dependencies.mouse_control
+        mouse_control.focus_enter(self)
+
+    def on_mouse_focus(self):
+        self.style_classes.add(self.STYLE_CLASS_FOCUS)
+
+        mouse_control = self.dependencies.mouse_control
+
+        if self.properties.cursor is not None:
+            mouse_control.set_cursor(self.properties.cursor)
+
+    def on_mouse_unfocus(self):
+        self.style_classes.discard(self.STYLE_CLASS_FOCUS)
+
+        mouse_control = self.dependencies.mouse_control
+        mouse_control.set_cursor(None)
+
+    def on_mouse_exit(self):
+        self._hover = False
+        self.style_classes.discard(self.STYLE_CLASS_HOVER)
+
+        mouse_control = self.dependencies.mouse_control
+        mouse_control.focus_exit(self)
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        if self.properties.position.is_inside(x, y):
+            if not self._hover:
+                self.on_mouse_enter()
+        else:
+            if self._hover:
+                self.on_mouse_exit()
+
+    def on_mouse_release(self, x, y, button, modifiers):
+        position = self.properties.position
+        if position.is_inside(x, y):
+            if self.properties.on_click:
+                self.properties.on_click()
+
+
+class UIComponent(InteractiveComponent):
+    pass
+
+
+@component("div")
+class Div(UIComponent):
+
+    @dataclass
+    class Properties(UIComponent.Properties):
         border: Border = field(default_factory=Border)
         margin: Rectangle = field(default_factory=Rectangle)
         padding: Rectangle = field(default_factory=Rectangle)
         background: Color = field(default_factory=Color)
 
     @dataclass
-    class Dependencies(DrawableComponent.Dependencies):
+    class Dependencies(UIComponent.Dependencies):
         pass
 
     @property
@@ -167,29 +240,9 @@ class Div(DrawableComponent):
             ctx.set_source(pat)
             ctx.fill()
 
+        super().on_draw(ctx)
+
 
 @component("button")
 class Button(Div):
-
-    @dataclass
-    class Properties(Div.Properties):
-        on_click: Optional[Callable] = None
-
-    @dataclass
-    class Dependencies(Div.Dependencies):
-        mouse_control: MouseControl
-
-    def on_init(self):
-        super().on_init()
-        on_mouse_release = self.dependencies.mouse_control.on_mouse_release
-        subscription = on_mouse_release.subscribe(self.on_mouse_release)
-        self._on_mouse_release_subscription = subscription
-
-    def on_destroy(self):
-        self._on_mouse_release_subscription.cancel()
-
-    def on_mouse_release(self, x, y, button, modifiers):
-        position = self.properties.position
-        if position.is_inside(x, y):
-            if self.properties.on_click:
-                self.properties.on_click()
+    pass
