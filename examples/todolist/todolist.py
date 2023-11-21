@@ -1,4 +1,4 @@
-from guiml.components import component, Component, Container
+from guiml.components import component, Container
 from dataclasses import dataclass, field
 
 

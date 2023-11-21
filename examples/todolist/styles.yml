@@ -71,6 +71,8 @@ $todolist:
 
 .todoitem:
   gravity: left
+  layout: stack
+  direction: horizontal
 
 .spacer:
   layout: align
@@ -94,6 +96,11 @@ input:
 
 .mouse_focus:
   draw_bounding_box: false
+
+.checkbox:
+  src: resources/material-design-icons/check_box_outline_blank_FILL0_wght400_GRAD0_opsz24.svg
+  width: 20
+  height: 20
 
 input:
   cursor: text

@@ -1,5 +1,8 @@
 <template>
   <div class="todolist">
-    <text control="for i, item in enumerate(self.todos)" class="todoitem" py_text="item"></text>
+    <div control="for i, item in enumerate(self.todos)" class="todoitem">
+      <svg class="checkbox"></svg>
+      <text class="todotext" py_text="item"></text>
+    </div>
   </div>
 </template>
