@@ -40,3 +40,12 @@ access in python using `\uf002`.
 Once the font is installed it can be used via the pango styling syntax
 
     <span font="Material Design Icons" foreground="red">\uF597</span>
+
+
+
+Improvements
+============
+
+- automatically add base class for dependencies and properties
+- scrollable field
+- multiple text inputs
