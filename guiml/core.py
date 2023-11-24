@@ -140,6 +140,13 @@ class PersistationManager():
     def renew(self, root_node):
         self.root = self.traverse(root_node, self.root, [])
 
+    def destroy_data_node(self, data_node):
+        for strategy in data_node.children.values():
+            for child_data_node in strategy:
+                self.destroy_data_node(child_data_node)
+
+        self.destroy_data(data_node.data)
+
     def traverse(self, node, restored_data, parent_nodes):
         if restored_data is None:
             restored_data = self.DataNode()
@@ -170,7 +177,7 @@ class PersistationManager():
                 for data_node in strategy:
                     if data_node.data is not None and id(
                             data_node.data) not in maintained:
-                        self.destroy_data(data_node.data)
+                        self.destroy_data_node(data_node)
 
             else:
                 for child in children:
@@ -205,6 +212,14 @@ class NodeObjects:
     component: "Optional[Component]" = None  # noqa: F821
     layout: "Optional[Layout]" = None  # noqa: F821
     injectables: Optional[dict] = None
+
+    def on_destroy(self):
+        if self.component:
+            self.component.on_destroy()
+
+        if self.injectables:
+            for injectable in self.injectables.values():
+                injectable.on_destroy()
 
 
 def make_intermediate_dataclass(base, properties):
