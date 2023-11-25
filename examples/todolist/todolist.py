@@ -23,7 +23,9 @@ class TodoList(Container):
     <template>
         <svg py_class="self.get_checkbox_class()"
              on_click="self.checkbox_clicked"></svg>
-        <text class="todotext" py_text="self.item.text"></text>
+        <div class="todotext_wrap">
+            <text class="todotext" py_text="self.item.text"></text>
+        </div>
         <svg class="delete"
              on_click="self.delete_clicked"></svg>
     </template>

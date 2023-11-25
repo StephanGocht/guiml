@@ -8,22 +8,53 @@ window:
     blue: 0.9
     alpha: 1.
 
+  padding:
+    top: 10
+    left: 10
+    right: 10
+    bottom: 10
+
   layout: grid
-  rows: 1
-  cols: 1
 
 todo:
+  layout: align
+
+todolist:
+  alignment: top
+  stretch: horizontal
+
   layout: grid
-  rows: 3
-  cols: 1
+
+.todolist:
+  layout: stack
+  direction: vertical
 
 todo_item:
   layout: stack
   direction: horizontal
+  gravity: stretch
+
+.todotext_wrap:
+  gravity: stretch
+  stretch: 1
+  layout: align
+
+  padding:
+    left: 5
+    right: 5
+
+.todotext:
+  alignment: left
+
+.footer:
+  alignment: bottom
+  stretch: horizontal
+  layout: stack
+
+
 
 $input_field:
-  row: 1
-  col: 0
+  gravity: stretch
 
 $add_button:
   row: 2
@@ -50,31 +81,22 @@ $add_button:
     right: 10
     bottom: 10
 
-button.hover:
+button:
   background:
     red: 0.94
     green: 0.94
     blue: 0.94
     alpha: 1.
 
+button.hover:
+  background:
+    red: 0.8
+    green: 1
+    blue: 0.8
+    alpha: 1.
+
 $button_text:
   alignment: center
-
-$todolist:
-  col: 0
-  row: 0
-
-  layout: grid
-  rows: 1
-  cols: 1
-
-.todolist:
-  layout: stack
-
-.todoitem:
-  gravity: left
-  layout: stack
-  direction: horizontal
 
 .spacer:
   layout: align

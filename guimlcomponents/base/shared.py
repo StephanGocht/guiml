@@ -23,7 +23,7 @@ class Rectangle:
     right: int = 0
 
     def is_valid(self):
-        return self.left < self.right and self.top < self.bottom
+        return self.left <= self.right and self.top <= self.bottom
 
     @property
     def width(self):

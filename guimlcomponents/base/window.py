@@ -120,7 +120,7 @@ class Window(Component):
 
     @property
     def wrap_size(self):
-        return self.properties.position
+        return Rectangle(0, 0, 0, 0)
 
     def remap_mouse_pos(self, callable, x, y, *args, **kwargs):
         # pyglet uses bot left as origin, swapt origin to top right

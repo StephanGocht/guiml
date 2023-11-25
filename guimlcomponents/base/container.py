@@ -128,10 +128,17 @@ class Container(UIComponent):
 
     @property
     def content_position(self):
+        """
+        The Area with in this container to palce contained components.
+        """
         return self.properties.position
 
     @property
     def wrap_size(self):
+        """
+        The wrap size is the additional size for each direction that this
+        component needs around its content.
+        """
         return Rectangle(0, 0, 0, 0)
 
     @property

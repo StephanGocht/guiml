@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from guiml.registry import layout
 
 from guimlcomponents.base.container import Rectangle
+from typing import Optional
 
 
 @layout("stack")
@@ -25,6 +26,7 @@ class Stack:
         and top or bottom for horizontal stacking or stretch for both
         """
         gravity: str = 'center'
+        stretch: Optional[int] = None
 
     def __init__(self, component):
         self.component = component
@@ -44,7 +46,7 @@ class Stack:
                 width = max(width, child.width)
                 height += child.height
             elif direction == 'horizontal':
-                width += child.height
+                width += child.width
                 height = max(height, child.height)
 
         wrap_size = self.component.wrap_size
@@ -65,46 +67,73 @@ class Stack:
         elif direction == 'horizontal':
             next_pos = position.left
 
+        total_stretch = 0
+
+        if direction == 'horizontal':
+            free_space = position.width
+        elif direction == 'vertical':
+            free_space = position.height
+
+        for child in children:
+            if child.properties.stretch is not None:
+                total_stretch += child.properties.stretch
+
+            if direction == 'horizontal':
+                free_space -= child.width
+            elif direction == 'vertical':
+                free_space -= child.height
+
         for child in children:
             child_pos = copy.copy(child.properties.position)
             gravity = child.properties.gravity
 
+            child_height = child.height
+            child_width = child.width
+            stretch = child.properties.stretch
+            if stretch is not None:
+                stretch = stretch // total_stretch * free_space
+                if direction == 'vertical':
+                    child_height += stretch
+                elif direction == 'horizontal':
+                    child_width += stretch
+
             if direction == 'vertical':
                 child_pos.top = next_pos
-                next_pos += child.height
+                next_pos += child_height
+
                 if gravity == 'left' or gravity == 'stretch':
                     child_pos.left = position.left
                 elif gravity == 'right':
-                    child_pos.left = position.right - child.width
+                    child_pos.left = position.right - child_width
                 elif gravity == 'center':
-                    child_pos.left = center_x - child.width / 2
+                    child_pos.left = center_x - child_width / 2
                 else:
                     raise ValueError(f'Invalid gravity "{gravity}".')
 
                 if gravity == 'stretch':
                     child_pos.right = position.right
                 else:
-                    child_pos.width = child.width
-                child_pos.height = child.height
+                    child_pos.width = child_width
+                child_pos.height = child_height
 
             elif direction == 'horizontal':
                 child_pos.left = next_pos
-                next_pos += child.width
+                next_pos += child_width
                 if gravity == 'top' or gravity == 'stretch':
                     child_pos.top = position.top
                 elif gravity == 'bottom':
-                    child_pos.top = position.bottom - child.height
+                    child_pos.top = position.bottom - child_height
                 elif gravity == 'center':
-                    child_pos.top = center_y - child.height / 2
+                    child_pos.top = center_y - child_height / 2
                 else:
                     raise ValueError(f'Invalid gravity "{gravity}".')
 
                 if gravity == 'stretch':
-                    child_pos.top = position.top
+                    child_pos.bottom = position.bottom
                 else:
-                    child_pos.height = child.height
+                    child_pos.height = child_height
 
-                child_pos.width = child.width
+                child_pos.width = child_width
 
             child.properties.position = child_pos
 
@@ -129,6 +158,12 @@ class Align:
         bottom left, bottom, bottom right
         """
         alignment: str = 'center'
+
+        """
+        Direction to stretch the contained element.
+        Either 'horizontal', 'vertical', or '' (empty).
+        """
+        stretch: str = ''
 
     def __init__(self, component):
         self.component = component
@@ -175,6 +210,13 @@ class Align:
 
             child_pos.width = child.width
             child_pos.height = child.height
+
+            if child.properties.stretch == 'horizontal':
+                child_pos.left = position.left
+                child_pos.right = position.right
+            elif child.properties.stretch == 'vertical':
+                child_pos.top = position.top
+                child_pos.bottom = position.bottom
 
             child.properties.position = child_pos
 
