@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import pyglet
 import ctypes
 from pyglet import gl, image
+from guimlcomponents.base.shared import Rectangle
 
 
 @injectable("window")
@@ -89,6 +90,12 @@ class Window(Component):
         top: int = 500
         left: int = 2000
 
+        @property
+        def position(self):
+            return Rectangle(0, 0, self.height, self.width)
+
+        layout: str = ""
+
     @dataclass
     class Dependencies:
         canvas: Canvas
@@ -106,6 +113,14 @@ class Window(Component):
 
         self._ui_loop_on_update_subscription = \
             self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+
+    @property
+    def content_position(self):
+        return self.properties.position
+
+    @property
+    def wrap_size(self):
+        return self.properties.position
 
     def remap_mouse_pos(self, callable, x, y, *args, **kwargs):
         # pyglet uses bot left as origin, swapt origin to top right

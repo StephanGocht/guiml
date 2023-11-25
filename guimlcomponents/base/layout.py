@@ -111,6 +111,10 @@ class Stack:
 
 @layout("align")
 class Align:
+    """
+    Align an intrinsically sized component relative to the containing element.
+    """
+
     ALIGNMENTS = set(['top left', 'top', 'top right', 'left', 'center',
                       'right', 'bottom left', 'bottom', 'bottom right'])
 
