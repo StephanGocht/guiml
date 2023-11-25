@@ -4,9 +4,6 @@ import gi
 gi.require_version('Rsvg', '2.0')
 from gi.repository import Rsvg
 
-print(Rsvg.MAJOR_VERSION)
-print(Rsvg.MINOR_VERSION)
-print(Rsvg.MICRO_VERSION)
 
 from guiml.registry import component
 from guimlcomponents.base.container import UIComponent

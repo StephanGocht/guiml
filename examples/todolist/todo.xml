@@ -2,9 +2,13 @@
   <todolist id="todolist" py_todos="self.todos"></todolist>
 
   <div class="footer">
-    <input id="input_field" bind_text="self.text"></input>
+    <text py_text="f'{self.num_open_todos}/{len(self.todos)} todos left'"></text>
+    <input
+      id="input_field"
+      bind_text="self.text"
+      on_submit="self.input_submit"></input>
     <button id="add_button" on_click="self.add_clicked">
-      <text id="button_text" py_text="f'add todo #{len(self.todos)}'"></text>
+      <text id="button_text" text="add"></text>
     </button>
   </div>
 </template>

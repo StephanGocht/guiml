@@ -12,7 +12,7 @@ from guiml.registry import component
 # from guimlcomponents.base.container import *
 # from guimlcomponents.base.window import
 
-from guimlcomponents.base.container import UIComponent
+from guimlcomponents.base.container import UIComponent, Div
 
 from guimlcomponents.base.window import (
         Canvas,
@@ -221,7 +221,8 @@ class Text(UIComponent):
     def height(self):
         value = self.get_layout().get_size()[1]
         value = pango.units_to_double(value)
-        return value
+
+        return round(value)
 
     def on_draw(self, context):
         super().on_draw(context)
@@ -236,14 +237,19 @@ class Text(UIComponent):
             pangocairo.show_layout(context, layout)
 
 
-# template = """<template><text py_text="self.escaped_text"></text></template>"""  # noqa: E501
-@component(name="input")
+@component(name="raw_input")
 class RawInput(Text):
 
     @dataclass
     class Properties(Text.Properties):
+
+        """Text in the input field. The text needs to be bound to a value by
+            the calling class, as otherwise the pressed inputs will not be
+            stored."""
         text: str = None
+
         on_text: Optional[Callable] = None
+        on_text_hook: Optional[Callable] = None
 
     @dataclass
     class Dependencies(Text.Dependencies):
@@ -252,7 +258,6 @@ class RawInput(Text):
     def on_init(self):
         super().on_init()
 
-        self._text = ""
         self.cursor_position = 0
 
         text_control = self.dependencies.text_control
@@ -268,17 +273,11 @@ class RawInput(Text):
 
     @property
     def text(self):
-        if self.properties.text is not None:
-            return self.properties.text
-        else:
-            return self._text
+        return self.properties.text
 
     @text.setter
     def text(self, value):
-        if self.properties.text is not None:
-            self.properties.text = value
-        else:
-            self._text = value
+        self.properties.text = value
 
     def remove_selection(self):
         start = min(self.selection_start, self.selection_end)
@@ -292,12 +291,17 @@ class RawInput(Text):
 
     def on_text(self, text):
         if text:
-            if self.has_selection():
-                self.remove_selection()
+            if self.properties.on_text_hook is not None:
+                text = self.properties.on_text_hook(text)
 
-            self.text = self.text[:self.cursor_position] + text + self.text[
-                self.cursor_position:]
-            self.cursor_position += len(text)
+            if text:
+                if self.has_selection():
+                    self.remove_selection()
+
+                self.text = (self.text[:self.cursor_position]
+                             + text
+                             + self.text[self.cursor_position:])
+                self.cursor_position += len(text)
 
             if self.properties.on_text is not None:
                 self.properties.on_text(self.text)
@@ -382,3 +386,62 @@ class RawInput(Text):
 
         self.update_cursor_position(motion)
         self.selection_end = self.cursor_position
+
+
+@component(
+    name="input",
+    template="""
+        <template>
+            <raw_input
+                bind_text="self.text"
+                on_text_hook="self.on_text_hook"
+                on_text="self.on_text">
+            </raw_input>
+        </template>
+    """
+)
+class Input(Div):
+    @dataclass
+    class Properties(Div.Properties):
+        text: str = None
+        on_submit: Optional[Callable] = None
+
+    @dataclass
+    class Dependencies(Div.Dependencies):
+        text_control: TextControl
+
+    def on_init(self):
+        super().on_init()
+        self._text = ''
+        self.enter_pressed = False
+
+    def on_destroy(self):
+        super().on_destroy()
+
+    @property
+    def text(self):
+        if self.properties.text is not None:
+            return self.properties.text
+        else:
+            return self._text
+
+    @text.setter
+    def text(self, value):
+        if self.properties.text is not None:
+            self.properties.text = value
+        else:
+            self._text = value
+
+    def on_text_hook(self, text):
+        if text == "\n":
+            self.enter_pressed = True
+            return ''
+
+        return text
+
+    def on_text(self, text):
+        if self.enter_pressed:
+            self.enter_pressed = False
+
+            if self.properties.on_submit is not None:
+                self.properties.on_submit(self.text)

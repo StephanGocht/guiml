@@ -44,8 +44,6 @@ class TodoItemComponent(Container):
         super().on_init()
 
     def on_draw(self, canvas):
-        if self.destroyed:
-            print('destroyed')
         super().on_draw(canvas)
 
     @property
@@ -62,10 +60,8 @@ class TodoItemComponent(Container):
             return 'checkbox'
 
     def delete_clicked(self):
-        print('deleted')
         self.dependencies.todo_service.remove(self.item)
 
     def on_destroy(self):
         self.destroyed = True
-        print('destroy')
         super().on_destroy()

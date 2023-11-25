@@ -127,6 +127,8 @@ class Window(Component):
         return callable(x, self.properties.height - y, *args, **kwargs)
 
     def on_text(self, text):
+        text = text.replace("\r\n", "\n")
+        text = text.replace("\r", "\n")
         self.dependencies.text_control.on_text(text)
 
     def set_mouse_cursor(self, value):
@@ -173,7 +175,7 @@ class Window(Component):
 
         self.window.push_handlers(on_draw=self.on_draw)
         self.window.push_handlers(
-            on_text=self.dependencies.text_control.on_text)
+            on_text=self.on_text)
         self.window.push_handlers(
             on_text_motion=self.dependencies.text_control.on_text_motion)
         self.window.push_handlers(on_text_motion_select=self.dependencies.

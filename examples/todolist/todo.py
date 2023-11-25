@@ -77,7 +77,14 @@ class Todo(Container):
     def todos(self):
         return self.dependencies.todo_service.todos
 
+    @property
+    def num_open_todos(self):
+        return sum((1 for todo in self.todos if not todo.done))
+
     def add_clicked(self):
         todo_service = self.dependencies.todo_service
         todo_service.add(self.text)
         self.text = ''
+
+    def input_submit(self, text):
+        self.add_clicked()

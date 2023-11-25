@@ -7,6 +7,11 @@ from guimlcomponents.base.container import Rectangle
 from typing import Optional
 
 
+def add_wrap_size(extend, wrap_size):
+    extend.width = extend.width + wrap_size.left + wrap_size.right
+    extend.height = extend.height + wrap_size.top + wrap_size.bottom
+
+
 @layout("stack")
 class Stack:
     """
@@ -49,10 +54,9 @@ class Stack:
                 width += child.width
                 height = max(height, child.height)
 
-        wrap_size = self.component.wrap_size
-        result.width = width + wrap_size.left + wrap_size.right
-        result.height = height + wrap_size.top + wrap_size.bottom
-
+        result.width = width
+        result.height = height
+        add_wrap_size(result, self.component.wrap_size)
         self.component.properties.position = result
 
     def layout(self, children):
@@ -174,10 +178,7 @@ class Align:
             result.width = max(result.width, child.width)
             result.height = max(result.height, child.height)
 
-        wrap_size = self.component.wrap_size
-        result.width = result.width + wrap_size.left + wrap_size.right
-        result.height = result.height + wrap_size.top + wrap_size.bottom
-
+        add_wrap_size(result, self.component.wrap_size)
         self.component.properties.position = result
 
     def layout(self, children):
@@ -254,6 +255,7 @@ class GridLayout:
             result.width = self.component.properties.cols * width
             result.height = self.component.properties.rows * height
 
+            add_wrap_size(result, self.component.wrap_size)
             self.component.properties.position = result
 
     def layout(self, children):

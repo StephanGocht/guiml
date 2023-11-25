@@ -56,10 +56,14 @@ todo_item:
 $input_field:
   gravity: stretch
 
-$add_button:
-  row: 2
-  col: 0
+button:
   layout: align
+
+  background:
+    red: 0.94
+    green: 0.94
+    blue: 0.94
+    alpha: 1.
 
   border:
     width: 1
@@ -81,13 +85,6 @@ $add_button:
     right: 10
     bottom: 10
 
-button:
-  background:
-    red: 0.94
-    green: 0.94
-    blue: 0.94
-    alpha: 1.
-
 button.hover:
   background:
     red: 0.8
@@ -104,6 +101,17 @@ $button_text:
   row: 2
 
 input:
+  cursor: text
+
+  layout: grid
+  draw_bounding_box: false
+
+  padding:
+    top: 3
+    left: 3
+    right: 3
+    bottom: 3
+
   background:
     red: 1
     green: 1
@@ -136,8 +144,6 @@ input:
   width: 20
   height: 20
 
-input:
-  cursor: text
 
 
 text:
