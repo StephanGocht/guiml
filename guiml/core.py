@@ -163,25 +163,25 @@ class PersistationManager():
             childs_by_strategy[child.get(self.STRATEGY_ATTRIBUTE,
                                          "order")].append(child)
 
+        maintained = set()
         restored_childs = dict()
+
         for key, children in childs_by_strategy.items():
             strategy = restored_data.children.get(key)
             if strategy:
-
-                maintained = set()
                 for child, data_node in zip(children, strategy.load(children)):
                     restored_childs[child] = data_node
                     if data_node is not None:
                         maintained.add(id(data_node.data))
-
-                for data_node in strategy:
-                    if data_node.data is not None and id(
-                            data_node.data) not in maintained:
-                        self.destroy_data_node(data_node)
-
             else:
                 for child in children:
                     restored_childs[child] = None
+
+        for strategy in restored_data.children.values():
+            for data_node in strategy:
+                if (data_node.data is not None
+                        and id(data_node.data) not in maintained):
+                    self.destroy_data_node(data_node)
 
         parent_nodes.append(node)
 

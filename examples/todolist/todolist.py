@@ -60,8 +60,10 @@ class TodoItemComponent(Container):
             return 'checkbox'
 
     def delete_clicked(self):
+        print('deleted')
         self.dependencies.todo_service.remove(self.item)
 
     def on_destroy(self):
         self.destroyed = True
+        print('destroy')
         super().on_destroy()
