@@ -1,3 +1,4 @@
 __pycache__
 examples/todolist/todos.json
 docs/build
+.pytest_cache
