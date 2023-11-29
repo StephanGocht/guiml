@@ -69,8 +69,10 @@ non-sensical error messages at you when you do something wrong.
 License
 -------
 
-The source code is licensed under the MIT license found at `/LICENSE`. The icons
-under `/examples/todolist/resources/material-design-icons`
+The source code is licensed under the MIT license found at `/LICENSE`. The
+icons under `/examples/todolist/resources/material-design-icons` are licensed
+under Apache-2 license found under
+`/examples/todolist/resources/material-design-icons/LICENSE`.
 
 Related Work
 ------------
