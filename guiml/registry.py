@@ -33,6 +33,9 @@ def layout(name):
 
     def register(cls):
         _layouts[name] = cls
+
+        cls.__doc__ += ("\n    This layout can be used by setting the property "
+                        f"layout to {name}.")
         return cls
 
     return register

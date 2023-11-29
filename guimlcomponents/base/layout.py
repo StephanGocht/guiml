@@ -2,9 +2,10 @@ import copy
 from dataclasses import dataclass
 
 from guiml.registry import layout
+from guiml.layout import Layout
 
 from guimlcomponents.base.container import Rectangle
-from typing import Optional
+from typing import Optional, Literal
 
 
 def add_wrap_size(extend, wrap_size):
@@ -13,25 +14,41 @@ def add_wrap_size(extend, wrap_size):
 
 
 @layout("stack")
-class Stack:
+class StackLayout:
     """
-    Stack intrinsically sized components.
+    Stack intrinsically sized components within the containing component.
     """
     @dataclass
     class Properties():
+        __doc__ = Layout.Properties.__doc__
+
+        direction: Literal['vertical', 'horizontal'] = 'vertical'
         """
-        direction for stacking either vertical or horizontal
+        The main direction to stack components.
         """
-        direction: str = 'vertical'
 
     @dataclass
     class ChildProperties():
+        __doc__ = Layout.ChildProperties.__doc__
+
+        gravity: Literal[
+                'center', 'stretch', 'left', 'right', 'top', 'bottom'
+            ] = 'center'
         """
-        gravity of stacked elements either left or right for vertical stacking
-        and top or bottom for horizontal stacking or stretch for both
+        Gravity controls how the elements behave along the direction
+        orthogonal to the main direction. The gravity of stacked elements is
+        either left or right for vertical stacking and top or bottom for
+        horizontal stacking. Center and stretch can be used for both vertical
+        and horizontal stacking.
         """
-        gravity: str = 'center'
-        stretch: Optional[int] = None
+
+        stretch: int = 0
+        """
+        If stretch is set to a value greater 0 then the component will fill
+        free space along the main direction. If multiple components have
+        stretch set then the fraction of free space they take will be its
+        stretch divided by the sum of all stretch values.
+        """
 
     def __init__(self, component):
         self.component = component
@@ -79,7 +96,7 @@ class Stack:
             free_space = position.height
 
         for child in children:
-            if child.properties.stretch is not None:
+            if child.properties.stretch > 0:
                 total_stretch += child.properties.stretch
 
             if direction == 'horizontal':
@@ -94,7 +111,7 @@ class Stack:
             child_height = child.height
             child_width = child.width
             stretch = child.properties.stretch
-            if stretch is not None:
+            if stretch > 0:
                 stretch = stretch // total_stretch * free_space
                 if direction == 'vertical':
                     child_height += stretch
@@ -143,9 +160,9 @@ class Stack:
 
 
 @layout("align")
-class Align:
+class AlignLayout:
     """
-    Align an intrinsically sized component relative to the containing element.
+    Align intrinsically sized component relative to the containing component.
     """
 
     ALIGNMENTS = set(['top left', 'top', 'top right', 'left', 'center',
@@ -153,21 +170,27 @@ class Align:
 
     @dataclass
     class Properties():
+        __doc__ = Layout.Properties.__doc__
+
         pass
 
     @dataclass
     class ChildProperties():
-        """
-        alignment can be one of top left, top, top right, left, center, right,
-        bottom left, bottom, bottom right
-        """
-        alignment: str = 'center'
+        __doc__ = Layout.ChildProperties.__doc__
 
-        """
-        Direction to stretch the contained element.
-        Either 'horizontal', 'vertical', or '' (empty).
-        """
-        stretch: str = ''
+        alignment: Literal[
+            'top left',
+            'top',
+            'top right',
+            'left',
+            'center',
+            'right',
+            'bottom left',
+            'bottom',
+            'bottom right',
+        ] = 'center'
+
+        stretch: Literal['horizontal', 'vertical', ''] = ''
 
     def __init__(self, component):
         self.component = component
@@ -224,14 +247,21 @@ class Align:
 
 @layout("grid")
 class GridLayout:
+    """
+    Layout components in a grid.
+    """
 
     @dataclass
     class Properties():
+        __doc__ = Layout.Properties.__doc__
+
         rows: int = 1
         cols: int = 1
 
     @dataclass
     class ChildProperties():
+        __doc__ = Layout.ChildProperties.__doc__
+
         row: int = 0
         rowspan: int = 1
         col: int = 0

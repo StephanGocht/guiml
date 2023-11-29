@@ -1,4 +1,3 @@
-cattrs
 pyyaml
 pyglet
 cairocffi

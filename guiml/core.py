@@ -283,6 +283,8 @@ def structure(data, data_type):
                                         value, field_type)
                             else:
                                 args[field.name] = value
+                        elif origin is typing.Literal:
+                            args[field.name] = value
                     else:
                         args[field.name] = structure(value, field.type)
 
