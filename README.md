@@ -32,18 +32,27 @@ Installation
 Linux
 -----
 
-The installation isn't streamlined, yet. If you are lucky then you can install
-the dependencies via `pip install -r requirements.txt` and then run the
-example via `python3 -m examples.todolist`. If you want to use it for your
-own project you can install via
+The installation isn't streamlined, yet. You will need to install [pygobject]
+(https://pygobject.readthedocs.io/en/latest/getting_started.html) manually.
+Then, if you are lucky then you can install the dependencies via `pip
+install -r requirements.txt` and then run the example via `python3 -m
+examples.todolist`. If you want to use it for your own project you can
+install via
 
     pip install .
+
+If you run into problems with installing the dependencies, you can check out
+the links in the Windows/ Mac sections.
+
+
 
 Windows / Mac
 -------------
 
-Installation should in principle be possible if you are brave and smart. Check
-how to install [cairocffi]
+Installation should in principle be possible if you are brave and smart.
+You will need [pygobject](https://pygobject.readthedocs.io/en/latest/getting_started.html).
+
+Check how to install [cairocffi]
 (https://doc.courtbouillon.org/cairocffi/stable/overview.html#installing-cffi)
 and [pangocffi](https://pangocffi.readthedocs.io/en/latest/overview.html) on
 their respective sites.

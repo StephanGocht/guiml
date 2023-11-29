@@ -4,6 +4,16 @@ Components
 Build in Components
 -------------------
 
+Button
+~~~~~~
+
+.. autoclass:: guimlcomponents.base.container.Button()
+
+    .. autoclass:: guimlcomponents.base.container.Button.Properties()
+         :members:
+         :undoc-members:
+         :inherited-members:
+
 Div
 ~~~
 
@@ -14,16 +24,6 @@ Div
          :undoc-members:
          :inherited-members:
 
-
-Text
-~~~~
-
-.. autoclass:: guimlcomponents.base.text.Text()
-
-    .. autoclass:: guimlcomponents.base.text.Text.Properties()
-         :members:
-         :undoc-members:
-         :inherited-members:
 
 Input
 ~~~~~
@@ -41,6 +41,26 @@ Svg
 .. autoclass:: guimlcomponents.base.image.Svg()
 
     .. autoclass:: guimlcomponents.base.image.Svg.Properties()
+         :members:
+         :undoc-members:
+         :inherited-members:
+
+Text
+~~~~
+
+.. autoclass:: guimlcomponents.base.text.Text()
+
+    .. autoclass:: guimlcomponents.base.text.Text.Properties()
+         :members:
+         :undoc-members:
+         :inherited-members:
+
+Window
+~~~~~~
+
+.. autoclass:: guimlcomponents.base.window.Window()
+
+    .. autoclass:: guimlcomponents.base.window.Window.Properties()
          :members:
          :undoc-members:
          :inherited-members:

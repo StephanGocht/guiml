@@ -303,4 +303,10 @@ class Div(Container):
 
 @component("button")
 class Button(Div):
-    pass
+    @dataclass
+    class Properties(Div.Properties):
+        pass
+
+    @dataclass
+    class Dependencies(Div.Dependencies):
+        pass
