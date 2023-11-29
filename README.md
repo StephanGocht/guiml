@@ -1,3 +1,4 @@
+[![Documentation Status](https://readthedocs.org/projects/guiml/badge/?version=latest)](https://guiml.readthedocs.io/en/latest/?badge=latest)
 
 guiml
 =====

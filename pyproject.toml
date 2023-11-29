@@ -2,9 +2,24 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["guiml", "guimlcomponents.*"]
+namespaces = true
+
 [project]
 name = "guiml"
 version = "0.0.1"
+authors = [
+  { name="Stephan Gocht", email="gocht@mailbox.org" },
+]
+description = "An xml based GUI framework with property binding and dependency injection."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "pyyaml",
     "pyglet",
@@ -12,3 +27,8 @@ dependencies = [
     "pangocffi",
     "pangocairocffi",
 ]
+
+[project.urls]
+Homepage = "https://github.com/StephanGocht/guiml"
+Issues = "https://github.com/StephanGocht/guiml/issues"
+Documentation = "http://guiml.readthedocs.io/"

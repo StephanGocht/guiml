@@ -49,3 +49,4 @@ Improvements
 - automatically add base class for dependencies and properties
 - scrollable field
 - multiple text inputs
+- allow passing inner xml to component and use of control and one way binding
