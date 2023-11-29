@@ -101,7 +101,7 @@ $button_text:
   row: 2
 
 input:
-  cursor: text
+  mouse_cursor: text
 
   layout: grid
   draw_bounding_box: false
@@ -147,4 +147,4 @@ input:
 
 
 text:
-  cursor: text
+  mouse_cursor: text

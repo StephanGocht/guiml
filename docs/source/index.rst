@@ -11,6 +11,7 @@ Welcome to guiml's documentation!
    :caption: Contents:
 
    tutorial
+   components
    layout
 
 

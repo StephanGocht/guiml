@@ -20,7 +20,23 @@ class ComponentMetaProperties:
 def component(*args, **kwargs):
 
     def register(cls):
+        if not hasattr(cls, 'Properties'):
+            raise AttributeError('Component is missing Properties')
+
+        if not hasattr(cls, 'Dependencies'):
+            raise AttributeError('Component is missing Dependencies')
+
+        cls.Properties.__doc__ = ''
+        cls.Dependencies.__doc__ = ''
+
         component = ComponentMetaProperties(cls, *args, **kwargs)
+
+        if cls.__doc__ is None:
+            cls.__doc__ = ''
+
+        cls.__doc__ += ("\n    This component can be used via the tag"
+                        f" :code:`{component.name}`.")
+
         if component.template:
             component.template = ET.fromstring(component.template)
         _components[component.name] = component
@@ -35,7 +51,7 @@ def layout(name):
         _layouts[name] = cls
 
         cls.__doc__ += ("\n    This layout can be used by setting the property "
-                        f"layout to {name}.")
+                        f"layout to :code:`{name}`.")
         return cls
 
     return register

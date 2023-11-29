@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Color:
+    """ """
+
     red: float = 0.
     green: float = 0.
     blue: float = 0.
@@ -11,19 +13,20 @@ class Color:
 
 @dataclass
 class Border:
-    width: int = 0.
+    """ """
+
+    width: int = 0
     color: Color = field(default_factory=Color)
 
 
 @dataclass
 class Rectangle:
+    """ """
+
     top: int = 0
     left: int = 0
     bottom: int = 0
     right: int = 0
-
-    def is_valid(self):
-        return self.left <= self.right and self.top <= self.bottom
 
     @property
     def width(self):
@@ -40,6 +43,9 @@ class Rectangle:
     @height.setter
     def height(self, value):
         self.bottom = self.top + value
+
+    def is_valid(self):
+        return self.left <= self.right and self.top <= self.bottom
 
     def is_inside(self, x, y):
         return (self.left <= x

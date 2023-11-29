@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Callable
+from typing import Optional, Callable, Literal
 
 import cairocffi as cairo
 
@@ -11,19 +11,28 @@ from guimlcomponents.base.shared import Rectangle, Border, Color
 
 
 class DrawableComponent(Component, Subscriber):
+    """
+    A base class for all components that draw onto the window.
+    """
 
     @dataclass
     class Properties(Component.Properties):
-        # bounding box of the component
+        """ """
+
         position: Rectangle = field(default_factory=Rectangle)
+        """
+        The Bounding box for the component to draw in.
+        """
+
         draw_bounding_box: bool = False
         z_index: int = 0
-
+        zz_index: int = 0
         """
         zz_index contains the number of parents and will be set
         automatically.
+
+        :meta private:
         """
-        zz_index: int = 0
 
     @dataclass
     class Dependencies(Component.Dependencies):
@@ -34,6 +43,17 @@ class DrawableComponent(Component, Subscriber):
         self.subscribe('on_draw', self.dependencies.canvas)
 
     def on_draw(self, context):
+        """
+        By inheriting from this component and overwriting this method you
+        can add additional draw commands to the cairo context.
+
+        Remember to call :code:`super().on_draw(context)` if you want to
+        inherit drawing behaviour.
+
+        Args:
+            context: The cairo context to draw on.
+        """
+
         if self.properties.draw_bounding_box:
             with context:
                 context.new_path()
@@ -58,7 +78,34 @@ class InteractiveComponent(DrawableComponent):
     @dataclass
     class Properties(DrawableComponent.Properties):
         on_click: Optional[Callable] = None
-        cursor: Optional[str] = None
+        mouse_cursor: Literal[
+            '',
+            'default',
+            'crosshair',
+            'hand',
+            'help',
+            'no',
+            'size',
+            'size_down',
+            'size_down_left',
+            'size_down_right',
+            'size_left',
+            'size_left_right',
+            'size_right',
+            'size_up',
+            'size_up_down',
+            'size_up_left',
+            'size_up_right',
+            'text',
+            'wait',
+            'wait_arrow',
+        ] = ''
+        """
+        See the
+        `pyglet documentation
+        <https://pyglet.readthedocs.io/en/latest/programming_guide/mouse.html#changing-the-mouse-cursor>`_
+        for the possible values.
+        """
 
     @dataclass
     class Dependencies(DrawableComponent.Dependencies):
@@ -82,8 +129,8 @@ class InteractiveComponent(DrawableComponent):
 
         mouse_control = self.dependencies.mouse_control
 
-        if self.properties.cursor is not None:
-            mouse_control.set_cursor(self.properties.cursor)
+        if self.properties.mouse_cursor is not '':
+            mouse_control.set_cursor(self.properties.mouse_cursor)
 
     def on_mouse_unfocus(self):
         self.style_classes.discard(self.STYLE_CLASS_FOCUS)
@@ -118,18 +165,24 @@ class UIComponent(InteractiveComponent):
 
 
 class Container(UIComponent):
+    """
+    Base class for containers that are compatible with the builtin layouts.
+    """
+
     @dataclass
     class Properties(UIComponent.Properties):
+        """ """
         layout: str = ""
 
     @dataclass
     class Dependencies(UIComponent.Dependencies):
+        """ """
         pass
 
     @property
     def content_position(self):
         """
-        The Area with in this container to palce contained components.
+        The Area within this container to palce contained components.
         """
         return self.properties.position
 
@@ -152,6 +205,9 @@ class Container(UIComponent):
 
 @component("div")
 class Div(Container):
+    """
+    A simple container with a border, margin, padding and a background color.
+    """
 
     @dataclass
     class Properties(Container.Properties):

@@ -85,7 +85,9 @@ class Text(UIComponent):
     @dataclass
     class Properties(UIComponent.Properties):
         text: str = ''
+        """The text to display."""
         apply_markup: bool = True
+        """Whether to apply pango markup or to escape it."""
 
     @dataclass
     class Dependencies(UIComponent.Dependencies):
