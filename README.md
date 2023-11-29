@@ -26,7 +26,41 @@ other GUI frameworks, this project starts quite low level using pyglet as
 window engine and to deal with IO, cairo for drawing and pango for text
 setting. Everything else is build from scratch.
 
+Installation
+============
 
+Linux
+-----
+
+The installation isn't streamlined, yet. If you are lucky then you can install
+the dependencies via `pip install -r requirements.txt` and then run the
+example via `python3 -m examples.todolist`. If you want to use it for your
+own project you can install via
+
+    pip install .
+
+Windows / Mac
+-------------
+
+Installation should in principle be possible if you are brave and smart. Check
+how to install [cairocffi]
+(https://doc.courtbouillon.org/cairocffi/stable/overview.html#installing-cffi)
+and [pangocffi](https://pangocffi.readthedocs.io/en/latest/overview.html) on
+their respective sites.
+
+Current state
+-------------
+
+The current state is a proof of concept. It should work on the example
+todolist, but is other wise terribly tested, terrebly documented and throws
+non-sensical error messages at you when you do something wrong.
+
+
+License
+-------
+
+The source code is licensed under the MIT license found at `/LICENSE`. The icons
+under `/examples/todolist/resources/material-design-icons`
 
 Related Work
 ------------
