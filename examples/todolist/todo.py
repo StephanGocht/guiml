@@ -57,7 +57,7 @@ class TodoService(Injectable):
         self.save()
 
 
-@component("todo", res.template_file("todo.xml"))
+@component("todo", res.template_file("templates.xml"))
 class Todo(Container):
 
     @dataclass

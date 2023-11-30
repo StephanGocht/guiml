@@ -27,6 +27,8 @@ def component(*args, **kwargs):
         cls.Dependencies.__doc__ = ''
 
         component = ComponentMetaProperties(cls, *args, **kwargs)
+        if component.template is not None:
+            component.template.index = component.name
 
         if cls.__doc__ is None:
             cls.__doc__ = ''

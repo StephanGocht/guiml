@@ -17,7 +17,7 @@ import todolist
 from resources import resources as res
 
 
-@component("application", res.template_file("root.xml"))
+@component("application", res.template_file("templates.xml"))
 class Application(Component):
     pass
 

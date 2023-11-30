@@ -395,13 +395,13 @@ class RawInput(Text):
 @component(
     "input",
     res.template("""
-        <template>
+        <input>
             <raw_input
                 bind_text="self.text"
                 on_text_hook="self.on_text_hook"
                 on_text="self.on_text">
             </raw_input>
-        </template>
+        </input>
     """)
 )
 class Input(Div):

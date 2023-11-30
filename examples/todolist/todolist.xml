@@ -1,7 +1,0 @@
-<template>
-  <div class="todolist">
-    <todo_item
-      control="for item in self.todos"
-      class="todoitem" py_item="item"></todo_item>
-  </div>
-</template>

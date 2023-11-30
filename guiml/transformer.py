@@ -83,7 +83,7 @@ class TemplatesTransformer:
 
     def insert_template(self, node, template):
         # todo add proper error message
-        assert (template.tag == "template")
+        assert (template.tag == node.tag)
 
         attrib = node.attrib
         node.clear()

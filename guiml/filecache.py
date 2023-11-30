@@ -110,15 +110,14 @@ class StyleHandle:
 
 
 class TemplateHandle:
-    def __init__(self, loader, multi_file=False, index=None):
+    def __init__(self, loader, index=None):
         self.loader = loader
-        self.multi_file = multi_file
         self.index = index
         self.read_time = None
 
     def get(self):
         data = self.loader.data
-        if self.multi_file:
+        if self.index:
             data = data.find(self.index)
 
         changed = False
@@ -159,9 +158,9 @@ class ResourceManager:
     def template(self, data):
         return RawHandle(ET.fromstring(data))
 
-    def template_file(self, file_path, multi_file=False):
+    def template_file(self, file_path):
         loader = self.cache.get(self.basedir / file_path, XmlLoader)
-        return TemplateHandle(loader, multi_file)
+        return TemplateHandle(loader)
 
     def reload(self):
         self.cache.reload()

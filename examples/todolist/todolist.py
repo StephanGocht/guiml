@@ -5,7 +5,7 @@ from resources import resources as res
 from todo import TodoItem, TodoService
 
 
-@component(name="todolist", template=res.template_file("todolist.xml"))
+@component(name="todolist", template=res.template_file("templates.xml"))
 class TodoList(Container):
 
     @dataclass
@@ -19,17 +19,7 @@ class TodoList(Container):
 
 @component(
     name="todo_item",
-    template=res.template("""
-    <template>
-        <svg py_class="self.get_checkbox_class()"
-             on_click="self.checkbox_clicked"></svg>
-        <div class="todotext_wrap">
-            <text class="todotext" py_text="self.item.text"></text>
-        </div>
-        <svg class="delete"
-             on_click="self.delete_clicked"></svg>
-    </template>
-    """))
+    template=res.template_file("templates.xml"))
 class TodoItemComponent(Container):
     @dataclass
     class Dependencies(Container.Dependencies):

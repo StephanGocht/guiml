@@ -1,7 +1,0 @@
-<template>
-  <window>
-    <div class="background">
-      <todo></todo>
-    </div>
-  </window>
-</template>

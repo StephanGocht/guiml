@@ -1,0 +1,45 @@
+<templates>
+    <application>
+        <window>
+            <div class="background">
+                <todo></todo>
+            </div>
+        </window>
+    </application>
+
+
+    <todo>
+        <todolist id="todolist" py_todos="self.todos"></todolist>
+
+        <div class="footer">
+            <text py_text="f'{self.num_open_todos}/{len(self.todos)} todos left'"></text>
+            <input
+                id="input_field"
+                bind_text="self.text"
+                on_submit="self.input_submit"></input>
+            <button id="add_button" on_click="self.add_clicked">
+                <text id="button_text" text="add"></text>
+            </button>
+        </div>
+    </todo>
+
+
+    <todolist>
+        <div class="todolist">
+            <todo_item
+                control="for item in self.todos"
+                class="todoitem" py_item="item"></todo_item>
+        </div>
+    </todolist>
+
+
+    <todo_item>
+        <svg py_class="self.get_checkbox_class()"
+                 on_click="self.checkbox_clicked"></svg>
+        <div class="todotext_wrap">
+                <text class="todotext" py_text="self.item.text"></text>
+        </div>
+        <svg class="delete"
+                 on_click="self.delete_clicked"></svg>
+    </todo_item>
+</templates>
