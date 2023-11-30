@@ -527,4 +527,4 @@ class ComponentManager(PersistationManager):
 
 def run(interval):
     manager = ComponentManager()  # noqa: F841
-    app.run(interval=1 / 32)
+    app.run(interval=interval)

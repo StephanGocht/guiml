@@ -42,7 +42,7 @@ class Application(Component):
 
 
 def main():
-    run(interval=1 / 32)
+    run(interval=1 / 120)
 
 
 @dataclass
