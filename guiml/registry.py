@@ -11,8 +11,8 @@ _injectables = defaultdict(list)
 class ComponentMetaProperties:
     component_class: Type['Component']  # noqa: F821
     name: str
-    template: Optional[str] = None
-    style: Optional[str] = None
+    template: Optional['DataHandle'] = None  # noqa: F821
+    style: Optional['DataHandle'] = None  # noqa: F821
 
 
 def component(*args, **kwargs):

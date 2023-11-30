@@ -1,0 +1,70 @@
+button:
+  button:
+    mouse_cursor: hand
+
+    background:
+      red: 0.94
+      green: 0.94
+      blue: 0.94
+      alpha: 1.
+
+    border:
+      width: 1
+      color:
+        red: 0
+        green: 0
+        blue: 0
+        alpha: 1
+
+    margin:
+      top: 5
+      left: 5
+      right: 5
+      bottom: 5
+
+    padding:
+      top: 10
+      left: 10
+      right: 10
+      bottom: 10
+
+  button.hover:
+    background:
+      red: 1
+      green: 1
+      blue: 1
+      alpha: 1.
+
+input:
+  input:
+    mouse_cursor: text
+
+    layout: grid
+    draw_bounding_box: false
+
+    padding:
+      top: 3
+      left: 3
+      right: 3
+      bottom: 3
+
+    background:
+      red: 1
+      green: 1
+      blue: 1
+      alpha: 1.
+
+    border:
+      width: 1
+      color:
+        red: 0
+        green: 0
+        blue: 0
+        alpha: 1
+
+  raw_input:
+    mouse_cursor: text
+
+text:
+  text:
+    mouse_cursor: text

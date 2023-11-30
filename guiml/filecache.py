@@ -76,6 +76,15 @@ class FileCache:
 ResourceData = namedtuple("ResourceData", "data changed")
 
 
+class DataHandle:
+    """
+    An object with a get function to obtain the handled data.
+    """
+
+    def get(self):
+        raise NotImplementedError()
+
+
 class RawHandle:
     def __init__(self, data):
         self.data = data

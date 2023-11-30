@@ -8,6 +8,7 @@ from guiml.registry import component
 from guiml.injectables import Subscriber
 from guimlcomponents.base.window import Canvas, MouseControl
 from guimlcomponents.base.shared import Rectangle, Border, Color
+from guimlcomponents.base.shared import resources as res
 
 
 class DrawableComponent(Component, Subscriber):
@@ -306,7 +307,7 @@ class Div(Container):
         super().on_draw(ctx)
 
 
-@component("button")
+@component("button", style=res.style_file('styles.yml'))
 class Button(Div):
     @dataclass
     class Properties(Div.Properties):

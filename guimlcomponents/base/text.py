@@ -81,7 +81,7 @@ def get_extent(text, font_size):
     return TextExtents(*font.text_extents(text))
 
 
-@component("text")
+@component("text", style=res.style_file('styles.yml'))
 class Text(UIComponent):
 
     @dataclass
@@ -394,7 +394,7 @@ class RawInput(Text):
 
 @component(
     "input",
-    res.template("""
+    template=res.template("""
         <input>
             <raw_input
                 bind_text="self.text"
@@ -402,8 +402,8 @@ class RawInput(Text):
                 on_text="self.on_text">
             </raw_input>
         </input>
-    """)
-)
+    """),
+    style=res.style_file('styles.yml'))
 class Input(Div):
     @dataclass
     class Properties(Div.Properties):
