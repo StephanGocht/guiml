@@ -2,9 +2,13 @@ import dataclasses
 import copy
 import typing
 
+
+import xml.etree.ElementTree as ET
+
 from dataclasses import dataclass
 from typing import Optional, Any
 from collections import defaultdict, namedtuple
+from pyglet import app
 
 from guiml.filecache import YamlLoader as StyleLoader
 from guiml.filecache import XmlLoader as MarkupLoader
@@ -316,22 +320,19 @@ class ComponentManager(PersistationManager):
         ui_loop: UILoop
 
     @property
-    def tree(self):
-        return self.markup_loader.data
-
-    @property
     def style(self):
         return self.style_loader.data
 
     PERSISTANCE_KEY_ATTRIBUTE = "persistance_key"
 
-    def __init__(self, root_markup):
+    def __init__(self):
         super().__init__()
         self.dependencies = None
         self.node_data = dict()
 
         self.style_loader = StyleLoader("styles.yml")
-        self.markup_loader = MarkupLoader(root_markup)
+
+        self.tree = ET.fromstring("<application></application>")
         self.dynamic_dom = DynamicDOM([
             TemplatesTransformer(),
             ControlTransformer(),
@@ -457,7 +458,6 @@ class ComponentManager(PersistationManager):
     def on_update(self, dt):
         needUpdate = False
         needUpdate |= self.style_loader.reload()
-        needUpdate |= self.markup_loader.reload()
 
         # if needUpdate:
         self.do_update()
@@ -523,3 +523,8 @@ class ComponentManager(PersistationManager):
 
         for child in node:
             self.layout(child)
+
+
+def run(interval):
+    manager = ComponentManager()  # noqa: F841
+    app.run(interval=1 / 32)

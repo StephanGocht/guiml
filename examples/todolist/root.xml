@@ -1,7 +1,7 @@
-<application>
+<template>
   <window>
     <div class="background">
       <todo></todo>
     </div>
   </window>
-</application>
+</template>
