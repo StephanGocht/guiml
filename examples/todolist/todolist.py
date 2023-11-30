@@ -1,11 +1,11 @@
 from guiml.components import component, Container
 from dataclasses import dataclass, field
 
-
+from resources import resources as res
 from todo import TodoItem, TodoService
 
 
-@component(name="todolist", template_file="todolist.xml")
+@component(name="todolist", template=res.template_file("todolist.xml"))
 class TodoList(Container):
 
     @dataclass
@@ -19,7 +19,7 @@ class TodoList(Container):
 
 @component(
     name="todo_item",
-    template="""
+    template=res.template("""
     <template>
         <svg py_class="self.get_checkbox_class()"
              on_click="self.checkbox_clicked"></svg>
@@ -29,7 +29,7 @@ class TodoList(Container):
         <svg class="delete"
              on_click="self.delete_clicked"></svg>
     </template>
-    """)
+    """))
 class TodoItemComponent(Container):
     @dataclass
     class Dependencies(Container.Dependencies):

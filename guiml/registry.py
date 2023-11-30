@@ -2,8 +2,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Type, Optional
 
-import xml.etree.ElementTree as ET
-
 _components = {}
 _layouts = {}
 _injectables = defaultdict(list)
@@ -14,7 +12,6 @@ class ComponentMetaProperties:
     component_class: Type['Component']  # noqa: F821
     name: str
     template: Optional[str] = None
-    template_file: Optional[str] = None
 
 
 def component(*args, **kwargs):
@@ -37,8 +34,6 @@ def component(*args, **kwargs):
         cls.__doc__ += ("\n    This component can be used via the tag"
                         f" :code:`{component.name}`.")
 
-        if component.template:
-            component.template = ET.fromstring(component.template)
         _components[component.name] = component
         return cls
 

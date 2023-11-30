@@ -2,7 +2,6 @@ import copy
 import xml.etree.ElementTree as ET
 
 from guiml.registry import _components
-from guiml.filecache import FileCache, MarkupLoader
 
 
 def del_atribute(node, attribute):
@@ -82,9 +81,6 @@ class TextTransformer:
 class TemplatesTransformer:
     template_marker = "_template_expanded"
 
-    def __init__(self):
-        self.cache = FileCache()
-
     def insert_template(self, node, template):
         # todo add proper error message
         assert (template.tag == "template")
@@ -103,15 +99,13 @@ class TemplatesTransformer:
 
         if meta_data:
             if meta_data.template is not None:
-                if not self.is_expanded(node):
-                    self.insert_template(node, meta_data.template)
-                    return True
+                data, changed = meta_data.template.get()
 
-            elif meta_data.template_file:
-                loader = self.cache.get(meta_data.template_file, MarkupLoader)
-                changed = loader.reload()
+                # todo: why do we check changed here? If this actually does
+                # something then the update isn't correct, because changed
+                # will only be true for the first time we request the template.
                 if not self.is_expanded(node) or changed:
-                    self.insert_template(node, loader.data.getroot())
+                    self.insert_template(node, data)
 
                     return True
 

@@ -2,6 +2,11 @@ import xml.etree.ElementTree as ET
 import yaml
 import os
 
+from pathlib import Path
+from collections import namedtuple
+
+import weakref
+
 
 class LazyFileLoader:
 
@@ -9,6 +14,7 @@ class LazyFileLoader:
         self.filename = filename
         self.read_time = None
         self.data = None
+        self.changed = True
 
         self.reload()
 
@@ -16,10 +22,12 @@ class LazyFileLoader:
         m_time = os.stat(self.filename).st_mtime
         if self.read_time != m_time:
             self.read_time = m_time
+            self.changed = True
             self.load()
-            return True
+        else:
+            self.changed = False
 
-        return False
+        return self.changed
 
     def load(self):
         with open(self.filename, "r") as f:
@@ -28,7 +36,7 @@ class LazyFileLoader:
         return self.data
 
 
-class StyleLoader(LazyFileLoader):
+class YamlLoader(LazyFileLoader):
 
     def load(self):
         with open(self.filename, "r") as f:
@@ -39,10 +47,10 @@ class StyleLoader(LazyFileLoader):
             self.data = {}
 
 
-class MarkupLoader(LazyFileLoader):
+class XmlLoader(LazyFileLoader):
 
     def load(self):
-        self.data = ET.parse(self.filename)
+        self.data = ET.parse(self.filename).getroot()
 
 
 class FileCache:
@@ -59,3 +67,101 @@ class FileCache:
             self.files[file_path] = Loader(file_path)
 
         return self.files[file_path]
+
+    def reload(self):
+        for loader in self.files.values():
+            loader.reload()
+
+
+ResourceData = namedtuple("ResourceData", "data changed")
+
+
+class RawHandle:
+    def __init__(self, data):
+        self.data = data
+        self.changed = True
+
+    def get(self):
+        changed = self.changed
+        if changed:
+            self.changed = False
+
+        return ResourceData(self.data, changed)
+
+
+class StyleHandle:
+    def __init__(self, loader, multi_file=False, index=None):
+        self.loader = loader
+        self.multi_file = multi_file
+        self.index = index
+        self.read_time = None
+
+    def get(self):
+        data = self.loader.data
+        if self.multi_file:
+            data = data[self.index]
+
+        changed = False
+        if self.read_time != self.loader.read_time:
+            self.read_time = self.loader.read_time
+            changed = True
+
+        return ResourceData(data, changed)
+
+
+class TemplateHandle:
+    def __init__(self, loader, multi_file=False, index=None):
+        self.loader = loader
+        self.multi_file = multi_file
+        self.index = index
+        self.read_time = None
+
+    def get(self):
+        data = self.loader.data
+        if self.multi_file:
+            data = data.find(self.index)
+
+        changed = False
+        if self.read_time != self.loader.read_time:
+            self.read_time = self.loader.read_time
+            changed = True
+
+        return ResourceData(data, changed)
+
+
+_resource_manger = []
+
+
+def reload_resources():
+    global _resource_manger
+    tmp = _resource_manger
+    _resource_manger = []
+
+    for ref in tmp:
+        manager = ref()
+        if manager is not None:
+            _resource_manger.append(ref)
+            manager.reload()
+
+
+class ResourceManager:
+    def __init__(self, basedir):
+        self.basedir = Path(basedir)
+        self.cache = FileCache()
+
+        global _resource_manger
+        _resource_manger.append(weakref.ref(self))
+
+    def style_file(self, file_path, multi_file=False):
+        loader = self.cache.get(self.basedir / file_path, YamlLoader)
+        return StyleHandle(loader, multi_file)
+
+    def template(self, data):
+        return RawHandle(ET.fromstring(data))
+
+    def template_file(self, file_path, multi_file=False):
+        loader = self.cache.get(self.basedir / file_path, XmlLoader)
+        return TemplateHandle(loader, multi_file)
+
+    def reload(self):
+        self.cache.reload()

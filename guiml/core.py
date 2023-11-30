@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import Optional, Any
 from collections import defaultdict, namedtuple
 
-from guiml.filecache import StyleLoader, MarkupLoader
+from guiml.filecache import YamlLoader as StyleLoader
+from guiml.filecache import XmlLoader as MarkupLoader
 
 from guiml.transformer import (
     DynamicDOM,
@@ -465,12 +466,12 @@ class ComponentManager(PersistationManager):
         tree = copy.deepcopy(self.tree)
 
         self.node_data = dict()
-        self.renew(tree.getroot())
+        self.renew(tree)
 
-        self.compute_recommended_size(tree.getroot())
-        self.layout(tree.getroot())
+        self.compute_recommended_size(tree)
+        self.layout(tree)
 
-        # self.dump_tree(tree.getroot())
+        # self.dump_tree(tree)
 
     def dump_tree(self, node):
         stack = list()

@@ -20,6 +20,8 @@ from guimlcomponents.base.window import (
         TextControl
     )
 
+from guimlcomponents.base.shared import resources as res
+
 from guiml.injectables import Injectable, injectable
 
 from typing import Optional, Callable
@@ -391,8 +393,8 @@ class RawInput(Text):
 
 
 @component(
-    name="input",
-    template="""
+    "input",
+    res.template("""
         <template>
             <raw_input
                 bind_text="self.text"
@@ -400,7 +402,7 @@ class RawInput(Text):
                 on_text="self.on_text">
             </raw_input>
         </template>
-    """
+    """)
 )
 class Input(Div):
     @dataclass

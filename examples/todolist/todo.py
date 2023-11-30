@@ -5,6 +5,7 @@ import dataclasses
 
 from guiml.injectables import Injectable, injectable
 
+from resources import resources as res
 
 import json
 
@@ -56,7 +57,7 @@ class TodoService(Injectable):
         self.save()
 
 
-@component(name="todo", template_file="todo.xml")
+@component("todo", res.template_file("todo.xml"))
 class Todo(Container):
 
     @dataclass
