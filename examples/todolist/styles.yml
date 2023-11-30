@@ -129,22 +129,9 @@ input:
 .mouse_focus:
   draw_bounding_box: false
 
-.checkbox:
-  src: resources/material-design-icons/check_box_outline_blank_FILL0_wght400_GRAD0_opsz24.svg
+.icon:
   width: 20
   height: 20
-
-.checkbox_ticked:
-  src: resources/material-design-icons/check_box_FILL0_wght400_GRAD0_opsz24.svg
-  width: 20
-  height: 20
-
-.delete:
-  src: resources/material-design-icons/delete_FILL0_wght400_GRAD0_opsz24.svg
-  width: 20
-  height: 20
-
-
 
 text:
   mouse_cursor: text

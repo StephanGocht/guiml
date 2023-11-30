@@ -144,9 +144,15 @@ def reload_resources():
 
 
 class ResourceManager:
-    def __init__(self, basedir):
+    def __init__(self, basedir, paths=None):
         self.basedir = Path(basedir)
         self.cache = FileCache()
+        self.paths = {}
+        if paths is not None:
+            for key, path in paths.items():
+                path = (self.basedir / path).resolve()
+                # todo log warning if path does not exist
+                self.paths[key] = path
 
         global _resource_manger
         _resource_manger.append(weakref.ref(self))
