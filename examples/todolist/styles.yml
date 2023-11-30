@@ -46,7 +46,6 @@ todo:
 
   $button_text:
     alignment: center
-    mouse_cursor: hand
 
 todolist:
   todolist:
@@ -77,7 +76,8 @@ todo_item:
   .icon:
     width: 20
     height: 20
+    mouse_cursor: hand
 
 global:
   .mouse_focus:
-    draw_bounding_box: true
+    draw_bounding_box: false

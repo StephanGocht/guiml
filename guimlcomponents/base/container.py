@@ -112,6 +112,10 @@ class InteractiveComponent(DrawableComponent):
     class Dependencies(DrawableComponent.Dependencies):
         mouse_control: MouseControl
 
+    @property
+    def cursor_whish(self):
+        return self.properties.mouse_cursor
+
     def on_init(self):
         super().on_init()
         self.subscribe('on_mouse_release', self.dependencies.mouse_control)
@@ -133,16 +137,8 @@ class InteractiveComponent(DrawableComponent):
     def on_mouse_focus(self):
         self.style_classes.add(self.STYLE_CLASS_FOCUS)
 
-        mouse_control = self.dependencies.mouse_control
-
-        if self.properties.mouse_cursor != '':
-            mouse_control.set_cursor(self.properties.mouse_cursor)
-
     def on_mouse_unfocus(self):
         self.style_classes.discard(self.STYLE_CLASS_FOCUS)
-
-        mouse_control = self.dependencies.mouse_control
-        mouse_control.set_cursor(None)
 
     def on_mouse_exit(self):
         self._hover = False

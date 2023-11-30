@@ -68,6 +68,14 @@ class MouseControl(Injectable):
 
                 self.focus = new_focus
 
+            with_cursor = set((component for component in self._hovers
+                              if getattr(component, 'cursor_whish', '')))
+            if with_cursor:
+                new_focus_with_cursor = min(with_cursor, key=get_key)
+                self.set_cursor(new_focus_with_cursor.cursor_whish)
+            else:
+                self.set_cursor(None)
+
 
 @injectable("window")
 class TextControl(Injectable):

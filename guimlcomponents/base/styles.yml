@@ -62,9 +62,10 @@ input:
         blue: 0
         alpha: 1
 
-  raw_input:
-    mouse_cursor: text
-
 text:
   text:
     mouse_cursor: text
+
+  .no_select:
+    selectable: False
+    mouse_cursor: ''

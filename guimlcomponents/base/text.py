@@ -90,6 +90,11 @@ class Text(UIComponent):
         """The text to display."""
         apply_markup: bool = True
         """Whether to apply pango markup or to escape it."""
+        selectable: bool = True
+        """
+        Whether the text can be selected. You can also use the class no_select
+        to set this value, while also adjusting the style accordingly.
+        """
 
     @dataclass
     class Dependencies(UIComponent.Dependencies):
@@ -195,7 +200,8 @@ class Text(UIComponent):
         return index
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if not self.properties.position.is_inside(x, y):
+        if (not self.properties.selectable
+                or not self.properties.position.is_inside(x, y)):
             self.selection_start = None
             self.selection_end = None
             self.last_click_index = None
