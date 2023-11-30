@@ -79,20 +79,29 @@ class TextTransformer:
 
 
 class TemplatesTransformer:
-    template_marker = "_template_expanded"
+    ATTR_TEMPLATE_MARKER = "_template_expanded"
+    ATTR_CREATOR_STYLE = "_creator_style"
 
-    def insert_template(self, node, template):
+    @classmethod
+    def get_creator_style(cls, node):
+        return node.get(cls.ATTR_CREATOR_STYLE, None)
+
+    def insert_template(self, node, template, style):
         # todo add proper error message
         assert (template.tag == node.tag)
 
         attrib = node.attrib
         node.clear()
         node.attrib = attrib
-        node.set(self.template_marker, "True")
+        node.set(self.ATTR_TEMPLATE_MARKER, True)
         node.extend(copy.deepcopy(template))
 
+        if style is not None:
+            for decendent in node.iter():
+                decendent.set(self.ATTR_CREATOR_STYLE, style)
+
     def is_expanded(self, node):
-        return node.get(self.template_marker, False)
+        return node.get(self.ATTR_TEMPLATE_MARKER, False)
 
     def __call__(self, node, component):
         meta_data = _components.get(node.tag)
@@ -105,7 +114,7 @@ class TemplatesTransformer:
                 # something then the update isn't correct, because changed
                 # will only be true for the first time we request the template.
                 if not self.is_expanded(node) or changed:
-                    self.insert_template(node, data)
+                    self.insert_template(node, data, meta_data.style)
 
                     return True
 

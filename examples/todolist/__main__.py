@@ -8,17 +8,17 @@ sys.path.extend([str(APP_PATH), str(ROOT_PATH)])
 
 os.chdir(APP_PATH)
 
-from guiml.components import component, Component
+from guiml.components import Component
 from guiml.core import run
 
-from guiml.components import component, Component, Container
 from dataclasses import dataclass, field
 
 import dataclasses
 
 from guiml.injectables import Injectable, injectable
 
-from guiml.components import component, Container
+from guiml.components import component as guiml_component
+from guiml.components import Container
 from dataclasses import dataclass, field
 
 from guiml.filecache import ResourceManager
@@ -36,13 +36,24 @@ res = ResourceManager(
     })
 
 
-@component("application", res.template_file("templates.xml"))
+def component(name):
+    return guiml_component(
+        name=name,
+        template=res.template_file("templates.xml"),
+        style=res.style_file("styles.yml"),
+    )
+
+
+@component("application")
 class Application(Component):
     pass
 
 
 def main():
-    run(interval=1 / 120)
+    run(
+        global_style=res.style_file("styles.yml", "global"),
+        interval=1 / 120
+    )
 
 
 @dataclass
@@ -92,7 +103,7 @@ class TodoService(Injectable):
         self.save()
 
 
-@component("todo", res.template_file("templates.xml"))
+@component("todo")
 class Todo(Container):
 
     @dataclass
@@ -126,7 +137,7 @@ class Todo(Container):
         self.add_clicked()
 
 
-@component(name="todolist", template=res.template_file("templates.xml"))
+@component(name="todolist")
 class TodoList(Container):
 
     @dataclass
@@ -138,9 +149,7 @@ class TodoList(Container):
         return self.properties.todos
 
 
-@component(
-    name="todo_item",
-    template=res.template_file("templates.xml"))
+@component("todo_item")
 class TodoItemComponent(Container):
     @dataclass
     class Dependencies(Container.Dependencies):

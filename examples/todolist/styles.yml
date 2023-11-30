@@ -1,137 +1,137 @@
-window:
-  layout: grid
+application:
+  window:
+    layout: grid
 
-.background:
-  background:
-    red: 0.9
-    green: 0.9
-    blue: 0.9
-    alpha: 1.
+  .background:
+    background:
+      red: 0.9
+      green: 0.9
+      blue: 0.9
+      alpha: 1.
 
-  padding:
-    top: 10
-    left: 10
-    right: 10
-    bottom: 10
+    padding:
+      top: 10
+      left: 10
+      right: 10
+      bottom: 10
 
-  layout: grid
+    layout: grid
+
 
 todo:
-  layout: align
+  todo:
+    layout: align
+
+  todolist:
+    alignment: top
+    stretch: horizontal
+
+  .footer:
+    alignment: bottom
+    stretch: horizontal
+    layout: stack
+
+  $input_field:
+    gravity: stretch
+
+  button:
+    layout: align
+
+    background:
+      red: 0.94
+      green: 0.94
+      blue: 0.94
+      alpha: 1.
+
+    border:
+      width: 1
+      color:
+        red: 0
+        green: 0
+        blue: 0
+        alpha: 1
+
+    margin:
+      top: 5
+      left: 5
+      right: 5
+      bottom: 5
+
+    padding:
+      top: 10
+      left: 10
+      right: 10
+      bottom: 10
+
+  button.hover:
+    background:
+      red: 0.8
+      green: 1
+      blue: 0.8
+      alpha: 1.
+
+  $button_text:
+    alignment: center
+
+  input:
+    mouse_cursor: text
+
+    layout: grid
+    draw_bounding_box: false
+
+    padding:
+      top: 3
+      left: 3
+      right: 3
+      bottom: 3
+
+    background:
+      red: 1
+      green: 1
+      blue: 1
+      alpha: 1.
+
+    border:
+      width: 1
+      color:
+        red: 0
+        green: 0
+        blue: 0
+        alpha: 1
 
 todolist:
-  alignment: top
-  stretch: horizontal
+  todolist:
+    layout: grid
 
-  layout: grid
-
-.todolist:
-  layout: stack
-  direction: vertical
+  .todolist:
+    layout: stack
+    direction: vertical
 
 todo_item:
-  layout: stack
-  direction: horizontal
-  gravity: stretch
+  todo_item:
+    layout: stack
+    direction: horizontal
+    gravity: stretch
 
-.todotext_wrap:
-  gravity: stretch
-  stretch: 1
-  layout: align
+  .todotext_wrap:
+    gravity: stretch
+    stretch: 1
+    layout: align
 
-  padding:
-    left: 5
-    right: 5
+    padding:
+      left: 5
+      right: 5
 
-.todotext:
-  alignment: left
+  .todotext:
+    alignment: left
 
-.footer:
-  alignment: bottom
-  stretch: horizontal
-  layout: stack
+  .icon:
+    width: 20
+    height: 20
 
+  text:
+    mouse_cursor: text
 
-
-$input_field:
-  gravity: stretch
-
-button:
-  layout: align
-
-  background:
-    red: 0.94
-    green: 0.94
-    blue: 0.94
-    alpha: 1.
-
-  border:
-    width: 1
-    color:
-      red: 0
-      green: 0
-      blue: 0
-      alpha: 1
-
-  margin:
-    top: 5
-    left: 5
-    right: 5
-    bottom: 5
-
-  padding:
-    top: 10
-    left: 10
-    right: 10
-    bottom: 10
-
-button.hover:
-  background:
-    red: 0.8
-    green: 1
-    blue: 0.8
-    alpha: 1.
-
-$button_text:
-  alignment: center
-
-.spacer:
-  layout: align
-  col: 0
-  row: 2
-
-input:
-  mouse_cursor: text
-
-  layout: grid
-  draw_bounding_box: false
-
-  padding:
-    top: 3
-    left: 3
-    right: 3
-    bottom: 3
-
-  background:
-    red: 1
-    green: 1
-    blue: 1
-    alpha: 1.
-
-  border:
-    width: 1
-    color:
-      red: 0
-      green: 0
-      blue: 0
-      alpha: 1
-
-.mouse_focus:
-  draw_bounding_box: false
-
-.icon:
-  width: 20
-  height: 20
-
-text:
-  mouse_cursor: text
+global:
+  .mouse_focus:
+    draw_bounding_box: true

@@ -10,9 +10,6 @@ from typing import Optional, Any
 from collections import defaultdict, namedtuple
 from pyglet import app
 
-from guiml.filecache import YamlLoader as StyleLoader
-from guiml.filecache import XmlLoader as MarkupLoader
-
 from guiml.transformer import (
     DynamicDOM,
     TemplatesTransformer,
@@ -319,18 +316,13 @@ class ComponentManager(PersistationManager):
     class Dependencies:
         ui_loop: UILoop
 
-    @property
-    def style(self):
-        return self.style_loader.data
-
     PERSISTANCE_KEY_ATTRIBUTE = "persistance_key"
 
-    def __init__(self):
+    def __init__(self, global_style=None):
         super().__init__()
         self.dependencies = None
         self.node_data = dict()
-
-        self.style_loader = StyleLoader("styles.yml")
+        self.global_style = global_style
 
         self.tree = ET.fromstring("<application></application>")
         self.dynamic_dom = DynamicDOM([
@@ -351,32 +343,46 @@ class ComponentManager(PersistationManager):
         self._update_subscription.cancel()
 
     def collect_properties(self, node, additional_classes):
+        meta_data = _components.get(node.tag)
+
         data = {}
-        data = merge_data(data, self.style.get(node.tag, {}))
 
-        classes = list()
+        styles = [
+            meta_data.style,
+            TemplatesTransformer.get_creator_style(node),
+            self.global_style
+        ]
 
-        if additional_classes:
-            classes.extend(additional_classes)
+        styles = [style for style in styles if style is not None]
 
-        node_classes = node.get("class")
-        if node_classes:
-            classes.extend(node_classes.split(" "))
+        for style in styles:
+            style = style.get().data
 
-        if classes:
-            # let earlier mention have precedence
-            classes.reverse()
+            data = merge_data(data, style.get(node.tag, {}))
 
-            for style_class in classes:
-                # todo: we need some way to match multiple classes / tags
-                data = merge_data(data,
-                                  self.style.get(".%s" % (style_class), {}))
-                data = merge_data(data,
-                                  self.style.get("%s.%s" % (node.tag, style_class), {}))
+            classes = list()
 
-        tag_id = node.get("id")
-        if tag_id:
-            data = merge_data(data, self.style.get("$%s" % (tag_id), {}))
+            if additional_classes:
+                classes.extend(additional_classes)
+
+            node_classes = node.get("class")
+            if node_classes:
+                classes.extend(node_classes.split(" "))
+
+            if classes:
+                # let earlier mention have precedence
+                classes.reverse()
+
+                for style_class in classes:
+                    # todo: we need some way to match multiple classes / tags
+                    data = merge_data(data,
+                                      style.get(".%s" % (style_class), {}))
+                    data = merge_data(data,
+                                      style.get("%s.%s" % (node.tag, style_class), {}))
+
+            tag_id = node.get("id")
+            if tag_id:
+                data = merge_data(data, style.get("$%s" % (tag_id), {}))
 
         data = merge_data(data, node.attrib)
 
@@ -457,7 +463,6 @@ class ComponentManager(PersistationManager):
 
     def on_update(self, dt):
         needUpdate = False
-        needUpdate |= self.style_loader.reload()
 
         # if needUpdate:
         self.do_update()
@@ -525,6 +530,6 @@ class ComponentManager(PersistationManager):
             self.layout(child)
 
 
-def run(interval):
-    manager = ComponentManager()  # noqa: F841
+def run(interval, global_style):
+    manager = ComponentManager(global_style)  # noqa: F841
     app.run(interval=interval)

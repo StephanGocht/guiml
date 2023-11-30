@@ -12,6 +12,7 @@ class ComponentMetaProperties:
     component_class: Type['Component']  # noqa: F821
     name: str
     template: Optional[str] = None
+    style: Optional[str] = None
 
 
 def component(*args, **kwargs):
@@ -29,6 +30,9 @@ def component(*args, **kwargs):
         component = ComponentMetaProperties(cls, *args, **kwargs)
         if component.template is not None:
             component.template.index = component.name
+
+        if component.style is not None:
+            component.style.index = component.name
 
         if cls.__doc__ is None:
             cls.__doc__ = ''
