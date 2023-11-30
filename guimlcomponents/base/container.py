@@ -117,6 +117,11 @@ class InteractiveComponent(DrawableComponent):
         self.subscribe('on_mouse_motion', self.dependencies.mouse_control)
         self._hover = False
 
+    def on_destroy(self):
+        mouse_control = self.dependencies.mouse_control
+        mouse_control.focus_exit(self)
+        super().on_destroy()
+
     def on_mouse_enter(self):
         self._hover = True
         self.style_classes.add(self.STYLE_CLASS_HOVER)
@@ -129,7 +134,7 @@ class InteractiveComponent(DrawableComponent):
 
         mouse_control = self.dependencies.mouse_control
 
-        if self.properties.mouse_cursor is not '':
+        if self.properties.mouse_cursor != '':
             mouse_control.set_cursor(self.properties.mouse_cursor)
 
     def on_mouse_unfocus(self):
