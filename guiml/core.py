@@ -19,6 +19,7 @@ from guiml.transformer import (
 
 from guiml.registry import _components, _layouts
 from guiml.injectables import Injector, UILoop
+from guiml.filecache import reload_resources
 
 import logging
 
@@ -331,7 +332,7 @@ class ComponentManager(PersistationManager):
             TextTransformer(),
         ])
 
-        self.do_update()
+        self.on_update(None)
 
     def on_init(self):
         # on_init is called when application tag is encountered
@@ -462,12 +463,7 @@ class ComponentManager(PersistationManager):
         self.dynamic_dom.update(node, data.component)
 
     def on_update(self, dt):
-        needUpdate = False
-
-        # if needUpdate:
-        self.do_update()
-
-    def do_update(self):
+        reload_resources()
         tree = copy.deepcopy(self.tree)
 
         self.node_data = dict()
