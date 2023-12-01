@@ -1,19 +1,33 @@
-import sys
-import os
 from pathlib import Path
 
-APP_PATH = Path(__file__).parent
-ROOT_PATH = APP_PATH.parent.parent
-sys.path.extend([str(APP_PATH), str(ROOT_PATH)])
+from guiml.components import component, Component, Div
+from guiml.resources import ResourceManager
+from guiml.core import run
 
-os.chdir(APP_PATH)
+# Get the directory containing this file.
+DIR = Path(__file__).parent.resolve()
 
-from guiml.core import Window
+# Create a resource manager to access resources, such as xml files, from DIR.
+# This makes sure that the program still works if we call it from a different
+# directory.
+resources = ResourceManager(DIR)
+
+
+def app_component(name):
+    return component(
+        name=name,
+        template=resources.template_file('templates.xml'),
+        style=resources.style_file('styles.yml'),)
+
+
+@app_component("application")
+class Application(Component):
+    pass
 
 
 def main():
-    window = Window("root.xml")
-    window.run()
+    # Start the guiml main loop
+    run()
 
 
 if __name__ == '__main__':

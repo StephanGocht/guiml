@@ -1,0 +1,21 @@
+<templates>
+  <application>
+    <window>
+      <div class="grid">
+        <div class="red grida"></div>
+        <div class="green gridb"></div>
+        <div class="blue gridc"></div>
+      </div>
+      <div class="stack">
+        <div class="red"><text text="red"></text></div>
+        <div class="green" gravity="right"><text text="green"></text></div>
+        <div class="blue" gravity="stretch"><text text="blue"></text></div>
+      </div>
+      <div class="align">
+        <div class="top red"><text text="red"></text></div>
+        <div class="bottom green"><text text="green"></text></div>
+        <div class="center blue"><text text="blue"></text></div>
+      </div>
+    </window>
+  </application>
+</templates>

@@ -46,8 +46,6 @@ Once the font is installed it can be used via the pango styling syntax
 Improvements
 ============
 
-- update layouts example
-
 - it seems like draw order is not sorted by z index
 - dev tools
 

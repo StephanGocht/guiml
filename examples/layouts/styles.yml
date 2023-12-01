@@ -1,58 +1,65 @@
-.grid:
-  layout: grid
-  rows: 3
-  cols: 3
+application:
+    window:
+        layout: grid
+        rows: 1
+        cols: 3
 
-  position:
-    top: 0
-    left: 0
-    bottom: 400
-    right: 400
+    .red:
+        background:
+            red: 1
+            green: 0
+            blue: 0
+            alpha: 0.5
 
-  background:
-    red: 0.9
-    green: 0.9
-    blue: 0.9
-    alpha: 1.
+    .green:
+        background:
+            red: 0
+            green: 1
+            blue: 0
+            alpha: 0.5
 
-$grid1:
-  layout: hflow
+    .blue:
+        background:
+            red: 0
+            green: 0
+            blue: 1
+            alpha: 0.5
 
-  row: 0
-  col: 0
+    .grid:
+        row: 0
+        col: 0
+        layout: grid
+        rows: 2
+        cols: 2
 
-  background:
-    red: 1
-    green: 0.5
-    blue: 0.5
-    alpha: 1.
+    .grida:
+        row: 0
+        col: 0
 
-$grid2:
-  row: 0
-  col: 1
+    .gridb:
+        row: 0
+        col: 1
 
-  background:
-    red: 0
-    green: 0.5
-    blue: 0
-    alpha: 1.
+    .gridc:
+        row: 1
+        col: 0
+        colspan: 2
 
-$grid3:
-  row: 1
-  col: 0
+    .stack:
+        layout: stack
+        row: 0
+        col: 1
 
-  background:
-    red: 0
-    green: 0
-    blue: 0.5
-    alpha: 1.
+    .align:
+        layout: align
+        row: 0
+        col: 2
 
-$grid4:
-  row: 1
-  col: 1
+    .top:
+        alignment: top
 
-  background:
-    red: 0
-    green: 0
-    blue: 0
-    alpha: 0
+    .bottom:
+        alignment: bottom right
+
+    .center:
+        alignment: center
