@@ -77,6 +77,11 @@ under Apache-2 license found under
 Related Work
 ------------
 
+You can find more boradly used GUI frameworks on
+[awesome-python](https://github.com/vinta/awesome-python#gui-development).
+
+See also:
+
 [collgraph](https://github.com/fork-tongue/collagraph)
 
 > Write your Python interfaces in a declarative manner with plain render
