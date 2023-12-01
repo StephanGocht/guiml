@@ -397,6 +397,17 @@ class ComponentManager(PersistationManager):
         property_classes = [component_cls.Properties]
 
         layout_cls = data.get("layout", None)
+
+        if layout_cls is None:
+            # Search the dataclass for a default value
+            for field in dataclasses.fields(component_cls.Properties):
+                if field.name == "layout":
+                    if field.default is not None:
+                        layout_cls = field.default
+                    elif field.default_factory is not None:
+                        layout_cls = field.default_factory()
+                    break
+
         if layout_cls:
             layout_cls = _layouts[layout_cls]
             property_classes.append(layout_cls.Properties)
@@ -419,13 +430,18 @@ class ComponentManager(PersistationManager):
         properties = structure(data, property_class)
         return properties
 
-    def make_layout(self, component):
+    def renew_layout(self, data):
+        component = data.component
+        if component is None:
+            return
+
         layout_cls = getattr(component.properties, "layout", None)
-        if layout_cls:
-            layout_cls = _layouts[layout_cls]
-            return layout_cls(component)
+        if not layout_cls:
+            data.layout = None
         else:
-            return None
+            layout_cls = _layouts[layout_cls]
+            if data.layout is None or type(data.layout) is not layout_cls:
+                data.layout = layout_cls(component)
 
     def create_data(self, node, parent_nodes):
         result = NodeObjects()
@@ -442,7 +458,6 @@ class ComponentManager(PersistationManager):
                                               parent_nodes)
             dependencies = injector.get_dependencies(component_cls)
             result.component = component_cls(properties, dependencies)
-            result.layout = self.make_layout(result.component)
         else:
             log_unknown_component(node.tag)
 
@@ -459,6 +474,7 @@ class ComponentManager(PersistationManager):
                 data.component.style_classes)
 
     def on_data_renewed(self, data, node, parent_nodes):
+        self.renew_layout(data)
         self.node_data[node] = data
         self.dynamic_dom.update(node, data.component)
 
@@ -468,6 +484,8 @@ class ComponentManager(PersistationManager):
 
         self.node_data = dict()
         self.renew(tree)
+
+        # self.dump_tree(tree)
 
         self.compute_recommended_size(tree)
         self.layout(tree)

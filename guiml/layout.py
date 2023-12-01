@@ -23,6 +23,9 @@ class Layout:
 
         pass
 
+    def __init__(self, component):
+        pass
+
     def compute_recommended_size(self, children):
         raise NotImplementedError()
 
