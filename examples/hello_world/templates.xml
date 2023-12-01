@@ -1,0 +1,7 @@
+<templates>
+    <application>
+        <window>
+            <text text="Hello World!"></text>
+        </window>
+    </application>
+</templates>

@@ -6,8 +6,10 @@ import functools
 from dataclasses import dataclass
 import pyglet
 import ctypes
+from typing import Optional
+
 from pyglet import gl, image
-from guimlcomponents.base.shared import Rectangle
+from guimlcomponents.base.shared import Rectangle, Color
 
 
 @injectable("window")
@@ -120,7 +122,15 @@ class Window(Component):
         def position(self):
             return Rectangle(0, 0, self.height, self.width)
 
-        layout: str = ""
+        @position.setter
+        def position(self, value):
+            pass
+
+        background: Optional[Color] = Color(1, 1, 1, 1)
+        """Background color to draw or None to draw nothing"""
+
+        layout: str = "stack"
+        show_fps: bool = False
 
     @dataclass
     class Dependencies:
@@ -139,6 +149,9 @@ class Window(Component):
 
         self._ui_loop_on_update_subscription = \
             self.dependencies.ui_loop.on_update.subscribe(self.on_update)
+
+        self._on_draw_subscription = \
+            self.dependencies.canvas.on_draw.subscribe(self.on_draw)
 
     @property
     def content_position(self):
@@ -199,7 +212,7 @@ class Window(Component):
         self.window = pyglet.window.Window(**args)
         self.window.set_location(self.properties.left, self.properties.top)
 
-        self.window.push_handlers(on_draw=self.on_draw)
+        self.window.push_handlers(on_draw=self.on_window_draw)
         self.window.push_handlers(
             on_text=self.on_text)
         self.window.push_handlers(
@@ -207,11 +220,30 @@ class Window(Component):
         self.window.push_handlers(on_text_motion_select=self.dependencies.
                                   text_control.on_text_motion_select)
 
-    def on_draw(self):
+    def on_window_draw(self):
         self.window.clear()
         # draw the texture
         self.texture.blit(0, 0)
-        self.fps_display.draw()
+        if self.properties.show_fps:
+            self.fps_display.draw()
+
+    def on_draw(self, ctx):
+        with ctx:
+            if self.properties.background is not None:
+                ctx.new_path()
+
+                top = self.properties.position.top
+                left = self.properties.position.left
+                bottom = self.properties.position.bottom
+                right = self.properties.position.right
+
+                ctx.rectangle(left, top, right - left, bottom - top)
+
+                color = self.properties.background
+                pat = cairo.SolidPattern(color.red, color.green, color.blue,
+                                         color.alpha)
+                ctx.set_source(pat)
+                ctx.fill()
 
     def init_canvas(self):
         width = self.properties.width
