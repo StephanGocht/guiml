@@ -19,7 +19,7 @@ from guiml.transformer import (
 
 from guiml.registry import _components, _layouts
 from guiml.injectables import Injector, UILoop
-from guiml.filecache import reload_resources
+from guiml.resources import reload_resources
 
 import logging
 
@@ -526,6 +526,6 @@ class ComponentManager(PersistationManager):
             self.layout(child)
 
 
-def run(interval, global_style):
+def run(interval=1/30, global_style=None):
     manager = ComponentManager(global_style)  # noqa: F841
     app.run(interval=interval)

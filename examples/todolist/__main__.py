@@ -21,7 +21,7 @@ from guiml.components import component as guiml_component
 from guiml.components import Container
 from dataclasses import dataclass, field
 
-from guiml.filecache import ResourceManager
+from guiml.resources import ResourceManager
 from pathlib import Path
 import json
 

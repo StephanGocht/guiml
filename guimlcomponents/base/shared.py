@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from guiml.filecache import ResourceManager
+from guiml.resources import ResourceManager
 from pathlib import Path
 
 resources = ResourceManager(Path(__file__).parent.resolve())
