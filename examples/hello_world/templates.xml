@@ -1,7 +1,21 @@
+<!--
 <templates>
     <application>
         <window>
             <text text="Hello World!"></text>
         </window>
     </application>
+</templates>
+-->
+
+<templates>
+    <application>
+        <window>
+            <hello_world></hello_world>
+        </window>
+    </application>
+
+    <hello_world>
+        <text text="Hello World!"></text>
+    </hello_world>
 </templates>

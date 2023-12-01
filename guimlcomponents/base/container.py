@@ -174,7 +174,7 @@ class Container(UIComponent):
     @dataclass
     class Properties(UIComponent.Properties):
         """ """
-        layout: str = ""
+        layout: str = "stack"
 
     @dataclass
     class Dependencies(UIComponent.Dependencies):

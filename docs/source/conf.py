@@ -21,11 +21,13 @@ release = '0.0.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx_rtd_theme',
+    "sphinx.ext.autosectionlabel",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
+autosectionlabel_prefix_document = True
 
 add_module_names = True
 

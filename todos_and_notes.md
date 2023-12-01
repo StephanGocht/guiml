@@ -47,8 +47,8 @@ Improvements
 ============
 
 - update layouts example
-- make tutorial 'workable'
 
+- it seems like draw order is not sorted by z index
 - dev tools
 
 - automatically add base class for dependencies and properties
