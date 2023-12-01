@@ -172,15 +172,17 @@ class Observable:
 
 class Subscriber:
 
-    def subscribe(self, observable_name, owner, callback=None):
-        if not hasattr(self, '_subscriptions'):
-            self._subscriptions = list()
-
+    def subscribe_unmanaged(self, observable_name, owner, callback=None):
         if callback is None:
             callback = getattr(self, observable_name)
 
         observable = getattr(owner, observable_name)
-        subscription = observable.subscribe(callback)
+        return observable.subscribe(callback)
+
+    def subscribe(self, observable_name, owner, callback=None):
+        subscription = self.subscribe_unmanaged(observable_name, owner, callback)
+        if not hasattr(self, '_subscriptions'):
+            self._subscriptions = list()
         self._subscriptions.append(subscription)
 
     def cancel_subscriptions(self):

@@ -31,7 +31,8 @@ todo:
     stretch: horizontal
     layout: stack
 
-  $input_field:
+  # todo: this should also work when using the tag instead of a class
+  .input:
     gravity: stretch
 
   button:

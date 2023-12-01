@@ -46,8 +46,12 @@ Once the font is installed it can be used via the pango styling syntax
 Improvements
 ============
 
+- update layouts example
+- make tutorial 'workable'
+
+- dev tools
+
 - automatically add base class for dependencies and properties
 - scrollable field
-- multiple text inputs
 - allow passing inner xml to component and use of control and one way binding (for svg and text)
 - provide a way for having slots in a template

@@ -268,14 +268,10 @@ class RawInput(Text):
     def on_init(self):
         super().on_init()
 
-        self.cursor_position = 0
-
-        text_control = self.dependencies.text_control
-        self.subscribe('on_text', text_control)
-        self.subscribe('on_text_motion', text_control)
-        self.subscribe('on_text_motion_select', text_control)
+        self._cursor_position = None
 
     def on_destroy(self):
+        self.release_text_focus()
         super().on_destroy()
 
     def get_input_text(self):
@@ -288,6 +284,17 @@ class RawInput(Text):
     @text.setter
     def text(self, value):
         self.properties.text = value
+
+    @property
+    def cursor_position(self):
+        return self._cursor_position
+
+    @cursor_position.setter
+    def cursor_position(self, value):
+        if self._cursor_position is None and value is not None:
+            self.take_text_focus()
+
+        self._cursor_position = value
 
     def remove_selection(self):
         start = min(self.selection_start, self.selection_end)
@@ -317,29 +324,30 @@ class RawInput(Text):
                 self.properties.on_text(self.text)
 
     def on_draw(self, context):
-        self.cursor_position = min(self.cursor_position, len(self.text))
+        if self.cursor_position is not None:
+            self.cursor_position = min(self.cursor_position, len(self.text))
 
-        with context:
-            layout = self.get_layout()
-            strong_cursor = pango.Rectangle()
-            weak_cursor = pango.Rectangle()
+            with context:
+                layout = self.get_layout()
+                strong_cursor = pango.Rectangle()
+                weak_cursor = pango.Rectangle()
 
-            byte_cursor = self.str_index_to_byte_index(self.cursor_position)
-            pango_c.pango_layout_get_cursor_pos(layout.pointer, byte_cursor,
-                                                strong_cursor.pointer,
-                                                weak_cursor.pointer)
+                byte_cursor = self.str_index_to_byte_index(self.cursor_position)
+                pango_c.pango_layout_get_cursor_pos(layout.pointer, byte_cursor,
+                                                    strong_cursor.pointer,
+                                                    weak_cursor.pointer)
 
-            left = pango.units_to_double(
-                strong_cursor.x) + self.properties.position.left
-            top = pango.units_to_double(
-                strong_cursor.y) + self.properties.position.top
-            width = 2
-            height = pango.units_to_double(strong_cursor.height)
+                left = pango.units_to_double(
+                    strong_cursor.x) + self.properties.position.left
+                top = pango.units_to_double(
+                    strong_cursor.y) + self.properties.position.top
+                width = 2
+                height = pango.units_to_double(strong_cursor.height)
 
-            context.rectangle(left, top, width, height)
-            pat = cairo.SolidPattern(0, 0, 0, 1)
-            context.set_source(pat)
-            context.fill()
+                context.rectangle(left, top, width, height)
+                pat = cairo.SolidPattern(0, 0, 0, 1)
+                context.set_source(pat)
+                context.fill()
 
         super().on_draw(context)
 
@@ -397,6 +405,35 @@ class RawInput(Text):
         self.update_cursor_position(motion)
         self.selection_end = self.cursor_position
 
+    def take_text_focus(self):
+        text_control = self.dependencies.text_control
+
+        text_control.take_text_focus(self)
+
+        self.text_subscriptions = [
+            self.subscribe_unmanaged(event, text_control)
+            for event in [
+                'on_text',
+                'on_text_motion',
+                'on_text_motion_select',
+                'on_new_text_focus'
+            ]
+        ]
+
+    def release_text_focus(self):
+        if self.cursor_position is not None:
+            self.dependencies.text_control.release_text_focus(self)
+
+        for subscription in self.text_subscriptions:
+            subscription.cancel()
+
+        self.text_subscriptions = []
+
+        self.cursor_position = None
+
+    def on_new_text_focus(self):
+        self.release_text_focus()
+
 
 @component(
     "input",
@@ -418,7 +455,7 @@ class Input(Div):
 
     @dataclass
     class Dependencies(Div.Dependencies):
-        text_control: TextControl
+        pass
 
     def on_init(self):
         super().on_init()

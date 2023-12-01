@@ -14,7 +14,7 @@
         <div class="footer">
             <text py_text="f'{self.num_open_todos}/{len(self.todos)} todos left'"></text>
             <input
-                id="input_field"
+                class="input"
                 bind_text="self.text"
                 on_submit="self.input_submit"></input>
             <button id="add_button" on_click="self.add_clicked">

@@ -81,9 +81,27 @@ class MouseControl(Injectable):
 class TextControl(Injectable):
 
     def on_init(self):
+        self._focus = None
+
         self.on_text = Observable()
         self.on_text_motion = Observable()
         self.on_text_motion_select = Observable()
+        self.on_new_text_focus = Observable()
+
+    def take_text_focus(self, component):
+        if component != self._focus:
+            self.on_new_text_focus()
+
+            assert self._focus is None, \
+                   'Text focus should have been released.'
+
+            self._focus = component
+
+    def release_text_focus(self, component):
+        assert self._focus == component, \
+               'Text focus released without having it.'
+
+        self._focus = None
 
 
 @component("window")
