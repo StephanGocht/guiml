@@ -54,8 +54,6 @@ Step 1) Install non Python Dependencies
 Install external requirenments (to access librsvg, cairo, pango from python)
 
     sudo apt install librsvg2-dev libcairo2-dev python3-gi-cairo
-    cd guiml
-    pip install -r requirements.txt
 
 If you run into problems with installing the dependencies, you can check out
 the links in the Other section below.
@@ -77,16 +75,6 @@ with cairo and librsvg.
 Check how to install [cairocffi](https://doc.courtbouillon.org/cairocffi/stable/overview.html#installing-cffi)
 and [pangocffi](https://pangocffi.readthedocs.io/en/latest/overview.html) on
 their respective sites.
-
-Once the dependencies are installed you should be able to run the examples
-after installing the python dependencies
-
-    pip install -r requirements.txt
-    python3 -m examples.todolist
-
-If you want to use guiml for your own project you can install it directly via
-
-    pip install .
 
 Step 2a) Installation from source
 ---------------------------------
