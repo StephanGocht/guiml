@@ -39,8 +39,8 @@ unstable.
 Dokumentation
 -------------
 
-Dokumentation can be found at [guiml.readthedocs.io]
-(https://guiml.readthedocs.io/en/latest/).
+The dokumentation and a small tutorial can be found at
+[guiml.readthedocs.io](https://guiml.readthedocs.io/en/latest/).
 
 
 Installation
@@ -62,8 +62,7 @@ the links in the Other section below.
 
 ### Other (Windows Native / Mac / Other Linux Distributions)
 
-For Windows it is recommended to use Debian on WSL2 ([Instructions]
-(https://wiki.debian.org/InstallingDebianOn/Microsoft/Windows/SubsystemForLinux))
+For Windows it is recommended to use Debian on WSL2 ([Instructions](https://wiki.debian.org/InstallingDebianOn/Microsoft/Windows/SubsystemForLinux))
 once on the Debian command line you can follow the normal Debian instructions
 for installing this package.
 
@@ -75,8 +74,7 @@ helpfull.
 You will need [pygobject](https://pygobject.readthedocs.io/en/latest/getting_started.html)
 with cairo and librsvg.
 
-Check how to install [cairocffi]
-(https://doc.courtbouillon.org/cairocffi/stable/overview.html#installing-cffi)
+Check how to install [cairocffi](https://doc.courtbouillon.org/cairocffi/stable/overview.html#installing-cffi)
 and [pangocffi](https://pangocffi.readthedocs.io/en/latest/overview.html) on
 their respective sites.
 
