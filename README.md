@@ -9,7 +9,8 @@ using XML as markup language. The markup language allows you to interact with
 your python code via variable binding, callbacks and the use of control flow
 primitives. To help you with organizing your application, the framework
 allows you to nicely compose components and comes with automated dependency
-injection.
+injection. (You know vue.js or angular from web development? Something like
+that.)
 
 Ever wondered why so many GUIs nowadays seem to be written with a HTTP/CSS/JS
 front end, even for desktop (e.g. via electron)? How is that the easiest way
@@ -19,13 +20,28 @@ bindings, defining components and the UI in a nice markup language, allow
 control flow in the markup language, have automatic dependency injection...
 
 Can't we have all these nice things but in python? And without the hassle of a
-client-server architecture?
+client-server architecture and java script?
 
 This project is a case study where I try to figure out and build the GUI
 framework that I would want to use. To not have to deal with legacy issues of
 other GUI frameworks, this project starts quite low level using pyglet as
 window engine and to deal with IO, cairo for drawing and pango for text
-setting. Everything else is build from scratch.
+setting and librsvg for svg drawing. Everything else is build from scratch.
+
+Current state
+-------------
+
+The current state is a proof of concept. It should work on the examples, but
+is other wise terribly tested, barely documented and probably throws
+non-sensical error messages at you when you do something wrong. The API is
+unstable.
+
+Dokumentation
+-------------
+
+Dokumentation can be found at [guiml.readthedocs.io]
+(https://guiml.readthedocs.io/en/latest/).
+
 
 Installation
 ============
@@ -103,21 +119,23 @@ Step 2b) Installation from PyPi
 
 tbd.
 
-Current state
--------------
 
-The current state is a proof of concept. It should work on the example
-todolist, but is other wise terribly tested, terrebly documented and throws
-non-sensical error messages at you when you do something wrong.
-
+Misc
+====
 
 License
 -------
 
-The source code is licensed under the MIT license found at `/LICENSE`. The
-icons under `/examples/todolist/resources/material-design-icons` are licensed
-under Apache-2 license found under
-`/examples/todolist/resources/material-design-icons/LICENSE`.
+You can use `find . -name LICENSE` to collect all used licenses. The license
+applies to all files in the contained directory or subdirectories.(Except for
+directories that have their own LICENSE). Which should currently be as
+follows.
+
+    ./LICENSE (MIT)
+    ./guimlcomponents/base/cairocffi_to_pycairo/LICENSE (BSD-3)
+    ./examples/todolist/resources/material-design-icons/LICENSE (Apache-2)
+
+Examples are not included in builds.
 
 Related Work
 ------------

@@ -2,13 +2,16 @@
 requires = ["setuptools >= 64"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+license-files = ["LICENSE", "guimlcomponents/base/cairocffi_to_pycairo/LICENSE"]
+
 [tool.setuptools.packages.find]
 include = ["guiml", "guimlcomponents.*"]
 namespaces = true
 
 [project]
 name = "guiml"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Stephan Gocht", email="gocht@mailbox.org" },
 ]
