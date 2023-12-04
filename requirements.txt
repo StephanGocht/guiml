@@ -1,5 +1,6 @@
 pyyaml
 pyglet
+pycairo < 1.17
 cairocffi
 pangocffi
 pangocairocffi
