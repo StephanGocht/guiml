@@ -115,7 +115,7 @@ To update to the latest version, run
 Step 2b) Installation from PyPi
 -------------------------------
 
-tbd.
+    pip install guiml
 
 
 Misc
