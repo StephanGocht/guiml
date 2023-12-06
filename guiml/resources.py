@@ -36,15 +36,34 @@ class LazyFileLoader:
         return self.data
 
 
-class YamlLoader(LazyFileLoader):
+class StyleLoader(LazyFileLoader):
 
     def load(self):
         with open(self.filename, "r") as f:
-            self.data = yaml.load(f, Loader=yaml.SafeLoader)
+            data = yaml.load(f, Loader=yaml.SafeLoader)
 
-        if self.data is None:
+        if data is None:
             # the file was empty
             self.data = {}
+        else:
+            self.data = dict()
+            for key, value in data.items():
+                self.data[key] = self.reorganize(value)
+
+    def reorganize(self, data):
+        result = dict()
+        for key, value in data.items():
+            last = key.split(' ')[-1]
+            elements = last.split('.')
+            if elements[0] == '':
+                first = '.' + elements[1]
+            else:
+                first = elements[0]
+
+            values = result.setdefault(first, list())
+            values.append((key, value))
+
+        return result
 
 
 class XmlLoader(LazyFileLoader):
@@ -105,6 +124,8 @@ class StyleHandle:
         self.read_time = None
 
     def get(self):
+        assert self.index is not None, "Only handeling style files with multiple components."  # noqa: E501
+
         data = self.loader.data
         if self.index:
             data = data.get(self.index, None)
@@ -166,7 +187,7 @@ class ResourceManager:
         _resource_manger.append(weakref.ref(self))
 
     def style_file(self, file_path, index=None):
-        loader = self.cache.get(self.basedir / file_path, YamlLoader)
+        loader = self.cache.get(self.basedir / file_path, StyleLoader)
         return StyleHandle(loader, index)
 
     def template(self, data):

@@ -311,6 +311,59 @@ def log_unknown_component(tag):
         _logged_unknown_components.add(tag)
 
 
+def match_style_key(key, node_id, tag, classes):
+    items = key.split('.')
+
+    score = -len(items)
+
+    items = iter(items)
+    item = next(items)
+    if item == '':
+        item = '.' + next(items)
+
+    if item[0] == '$':
+        if item[1:] != node_id:
+            return False
+    elif item[0] == '.':
+        if item[1:] not in classes:
+            return False
+    else:
+        if item != tag:
+            return False
+
+    for item in items:
+        if item not in classes:
+            return False, score
+
+    return True, score
+
+
+def get_applicable_styles(styles, node_id, name, classes):
+    result = []
+    for i, style in enumerate(styles):
+        if node_id is not None:
+            for key, data in style.get('$' + node_id, []):
+                match, score = match_style_key(key, node_id, name, classes)
+                if match:
+                    result.append(((i, 0, score), data))
+
+        for key, data in style.get(name, []):
+            match, score = match_style_key(key, node_id, name, classes)
+            if match:
+                result.append(((i, 1, score), data))
+
+        for style_class in classes:
+            for key, data in style.get('.' + style_class, []):
+                match, score = match_style_key(key, node_id, name, classes)
+                if match:
+                    result.append(((i, 2, score), data))
+
+    result.sort(key=lambda x: x[0])
+
+    result = [x[1] for x in result]
+    return result
+
+
 class ComponentManager(PersistationManager):
 
     @dataclass
@@ -348,44 +401,30 @@ class ComponentManager(PersistationManager):
 
         data = {}
 
-        styles = [
+        style_handler = [
             meta_data.style,
             TemplatesTransformer.get_creator_style(node),
             self.global_style
         ]
 
-        styles = [style for style in styles if style is not None]
+        styles = []
+        for handler in style_handler:
+            if handler is not None:
+                data = handler.get().data
+                if data is not None:
+                    styles.append(data)
 
-        for style in styles:
-            style = style.get().data
-            if style is None:
-                continue
+        classes = set()
 
-            data = merge_data(data, style.get(node.tag, {}))
+        if additional_classes:
+            classes.update(additional_classes)
 
-            classes = list()
+        node_classes = node.get("class")
+        if node_classes:
+            classes.update(node_classes.split(" "))
 
-            if additional_classes:
-                classes.extend(additional_classes)
-
-            node_classes = node.get("class")
-            if node_classes:
-                classes.extend(node_classes.split(" "))
-
-            if classes:
-                # let earlier mention have precedence
-                classes.reverse()
-
-                for style_class in classes:
-                    # todo: we need some way to match multiple classes / tags
-                    data = merge_data(data,
-                                      style.get(".%s" % (style_class), {}))
-                    data = merge_data(data,
-                                      style.get("%s.%s" % (node.tag, style_class), {}))
-
-            tag_id = node.get("id")
-            if tag_id:
-                data = merge_data(data, style.get("$%s" % (tag_id), {}))
+        for node_styles in get_applicable_styles(styles, node.get("id"), node.tag, classes):
+            data = merge_data(data, node_styles)
 
         data = merge_data(data, node.attrib)
 
