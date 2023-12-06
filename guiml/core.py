@@ -358,6 +358,8 @@ class ComponentManager(PersistationManager):
 
         for style in styles:
             style = style.get().data
+            if style is None:
+                continue
 
             data = merge_data(data, style.get(node.tag, {}))
 

@@ -107,7 +107,7 @@ class StyleHandle:
     def get(self):
         data = self.loader.data
         if self.index:
-            data = data[self.index]
+            data = data.get(self.index, None)
 
         changed = False
         if self.read_time != self.loader.read_time:
