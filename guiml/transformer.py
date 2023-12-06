@@ -37,15 +37,8 @@ class DynamicDOM:
         self.manipulators = manipulators
 
     def update(self, node, component):
-        modified = True
-        while modified:
-
-            modified = False
-            for manipulator in self.manipulators:
-                modified |= manipulator(node, component)
-
-                if modified:
-                    break
+        for manipulator in self.manipulators:
+            manipulator(node, component)
 
 
 class TextTransformer:
