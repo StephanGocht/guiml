@@ -60,6 +60,7 @@ class PangoContext(Injectable):
 
     def on_destroy(self):
         self._on_context_change.cancel()
+        super().on_destroy(self)
 
     def on_canvas_context_change(self, context):
         self.context = pangocairo.create_context(context)
@@ -113,7 +114,7 @@ class Text(UIComponent):
         self.last_click_index = None
 
     def on_destroy(self):
-        self.cancel_subscriptions()
+        super().on_destroy()
 
     def get_raw_text(self):
         # todo strip text from formatting for selection to work properly

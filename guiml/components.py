@@ -4,3 +4,5 @@ from guiml._components import *  # noqa: F401, F403
 from guimlcomponents.base.container import Container  # noqa: F401
 from guimlcomponents.base.container import DrawableComponent  # noqa: F401
 from guimlcomponents.base.container import Div  # noqa: F401
+from guimlcomponents.base.container import UIComponent  # noqa: F401
+
