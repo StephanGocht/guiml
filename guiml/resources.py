@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import yaml
 import os
+import logging
 
 from pathlib import Path
 from collections import namedtuple
@@ -148,6 +149,9 @@ class TemplateHandle:
         data = self.loader.data
         if self.index:
             data = data.find(self.index)
+
+            if data is None:
+                logging.warning(f"Did not find template for '{self.index}'.")
 
         changed = False
         if self.read_time != self.loader.read_time:

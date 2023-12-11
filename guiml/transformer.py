@@ -103,13 +103,14 @@ class TemplatesTransformer:
             if meta_data.template is not None:
                 data, changed = meta_data.template.get()
 
-                # todo: why do we check changed here? If this actually does
-                # something then the update isn't correct, because changed
-                # will only be true for the first time we request the template.
-                if not self.is_expanded(node) or changed:
-                    self.insert_template(node, data, meta_data.style)
+                if data is not None:
+                    # todo: why do we check changed here? If this actually does
+                    # something then the update isn't correct, because changed
+                    # will only be true for the first time we request the template.
+                    if not self.is_expanded(node) or changed:
+                        self.insert_template(node, data, meta_data.style)
 
-                    return True
+                        return True
 
         return False
 

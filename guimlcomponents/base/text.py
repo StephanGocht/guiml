@@ -268,7 +268,7 @@ class RawInput(Text):
 
     def on_init(self):
         super().on_init()
-
+        self.text_subscriptions = []
         self._cursor_position = None
 
     def on_destroy(self):
