@@ -360,7 +360,7 @@ def get_applicable_styles(styles, node_id, name, classes):
 
     result.sort(key=lambda x: x[0])
 
-    result = [x[1] for x in result]
+    result = [x[1] for x in reversed(result)]
     return result
 
 
