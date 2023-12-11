@@ -77,6 +77,13 @@ Component
     :undoc-members:
 
 
+StyleClassHandler
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: guiml.components.StyleClassHandler()
+    :members:
+
+
 DrawableComponent
 ~~~~~~~~~~~~~~~~~
 

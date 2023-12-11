@@ -2,7 +2,11 @@ from dataclasses import dataclass as _dataclass
 from typing import Optional, Callable
 
 
-class StyleClasses:
+class StyleClassHandler:
+    """
+    Helper class to manage dyamically set style classes of a component.
+    """
+
     def __init__(self):
         self.classes = dict()
 
@@ -17,9 +21,18 @@ class StyleClasses:
     def add(self,
             style_class: str,
             condition: Optional[Callable[[], bool]] = None):
+        """
+        Add the given style class. If condition is not none then the style
+        class will only be added if the condition returns true when called.
+        """
+
         self.classes[style_class] = condition
 
-    def remove(self, style_class):
+    def remove(self, style_class: str):
+        """
+        Remove the given style class.
+        """
+
         self.classes.pop(style_class, None)
 
 
@@ -65,7 +78,7 @@ class Component:
     def __init__(self, properties, dependencies):
         self.properties = properties
         self.dependencies = dependencies
-        self.style_classes = StyleClasses()
+        self.style_classes = StyleClassHandler()
         self.on_init()
 
     def on_init(self):

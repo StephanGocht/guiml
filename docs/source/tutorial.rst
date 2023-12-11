@@ -330,6 +330,57 @@ convenience function to the following.
     top-level key in the YAML file tells guiml to which component's template
     the style should be applied to.
 
+
+Dynamic Style Classes
+---------------------
+
+Classes are used to determine the styles used for a component. Therefore, we
+can not use the same meachanisms we used to set properties dyamically to also
+set style classes dyamically. Instead there are two ways in guiml to set
+styles dyamically, depending if you wan to set the style of the current
+component or of a child component.
+
+To set the style of the current component you can
+access :code:`self.style_classes` on a component, which is of
+type :ref:`components:StyleClassHandler` and use the methods :code:`add`
+and :code:`remove`.
+
+To dynamically set a style class on a child component, you add an attribute in
+the template as follows. The name of the attribute starts with the
+prefix :code:`class_` followed by the class to add. The value is wrapped
+into :code:`bool()` and passed to pythons
+`eval <https://docs.python.org/3/library/functions.html#eval>`_ function. If
+the result evaluates to True then then the class is added otherwise it is not
+added.
+
+For example, if we use the template
+
+.. code-block:: xml
+    :caption: Snippet for :code:`templates.xml`
+
+        <hello_world>
+            <text py_text="self.greeting" class_not_empty="self.greeting"></text>
+        </hello_world>
+
+and the source code
+
+.. code-block:: py
+    :caption: Snippet for :code:`app.py`
+
+    @component("hello_world")
+    class HelloWorld(Div):
+        def on_init(self):
+            self.greeting = ''
+
+        def hello(self):
+            self.greeting = 'Hello, you too!'
+
+then the class :code:`not_empty` will  not be set on the text component,
+because :code:`self.greeting` is :code:`''` and :code:`bool
+('')` is :code:`False`. However, when :code:`self.greeting` is assigned a non
+empty value, then the class :code:`not_empty` will be set on the text
+component,
+
 Events
 ------
 
