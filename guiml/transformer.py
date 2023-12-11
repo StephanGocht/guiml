@@ -178,13 +178,22 @@ class ControlTransformer:
                                          self.setter(value, context))
 
                     node.set(key, new_value)
+            elif key.startswith("class_"):
+                value = f"bool({node.get(key)})"
+
+                def condition(value=value, context=context):
+                    result = eval(value, None, context)
+                    return result
+
+                node.set(key, condition)
 
         return modified
 
-    def transform(self, node, context):
+    def transform(self, node, context, component_root=False):
         modified = False
 
-        modified |= self.transform_attributes(node, context)
+        if not component_root:
+            modified |= self.transform_attributes(node, context)
 
         offset = 0
         for i in range(len(node)):
@@ -227,7 +236,7 @@ class ControlTransformer:
         # node.set(CONTEXT_ATTRIBUTE, context)
         # node.set(CLEAR_CONTEXT_ATTRIBUTE, True)
 
-        return self.transform(node, {"self": component})
+        return self.transform(node, {"self": component}, component_root=True)
 
     # @classmethod
     # def iter_context(cls, node):

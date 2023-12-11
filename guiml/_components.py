@@ -1,4 +1,26 @@
 from dataclasses import dataclass as _dataclass
+from typing import Optional, Callable
+
+
+class StyleClasses:
+    def __init__(self):
+        self.classes = dict()
+
+    def get(self):
+        result = list()
+        for key, condition in self.classes.items():
+            if condition is None or condition():
+                result.append(key)
+
+        return result
+
+    def add(self,
+            style_class: str,
+            condition: Optional[Callable[[], bool]] = None):
+        self.classes[style_class] = condition
+
+    def remove(self, style_class):
+        self.classes.pop(style_class, None)
 
 
 class Component:
@@ -43,7 +65,7 @@ class Component:
     def __init__(self, properties, dependencies):
         self.properties = properties
         self.dependencies = dependencies
-        self.style_classes = set()
+        self.style_classes = StyleClasses()
         self.on_init()
 
     def on_init(self):

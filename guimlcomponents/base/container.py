@@ -138,11 +138,11 @@ class InteractiveComponent(DrawableComponent):
         self.style_classes.add(self.STYLE_CLASS_FOCUS)
 
     def on_mouse_unfocus(self):
-        self.style_classes.discard(self.STYLE_CLASS_FOCUS)
+        self.style_classes.remove(self.STYLE_CLASS_FOCUS)
 
     def on_mouse_exit(self):
         self._hover = False
-        self.style_classes.discard(self.STYLE_CLASS_HOVER)
+        self.style_classes.remove(self.STYLE_CLASS_HOVER)
 
         mouse_control = self.dependencies.mouse_control
         mouse_control.focus_exit(self)

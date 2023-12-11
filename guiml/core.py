@@ -423,6 +423,10 @@ class ComponentManager(PersistationManager):
         if node_classes:
             classes.update(node_classes.split(" "))
 
+        for key, value in node.items():
+            if key.startswith("class_") and value():
+                classes.add(key[6:])
+
         for node_styles in get_applicable_styles(styles, node.get("id"), node.tag, classes):
             data = merge_data(data, node_styles)
 
@@ -512,7 +516,7 @@ class ComponentManager(PersistationManager):
             # todo: do we really want to overwrite the properties every time?
             data.component.properties = self.make_properties(
                 type(data.component), node, parent_nodes,
-                data.component.style_classes)
+                data.component.style_classes.get())
 
     def on_data_renewed(self, data, node, parent_nodes):
         self.renew_layout(data)
