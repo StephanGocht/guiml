@@ -464,7 +464,8 @@ class ComponentManager(PersistationManager):
                 if parent_component:
                     layout_parent_cls = getattr(parent_component.properties,
                                                 "layout", None)
-                    break
+                    if layout_parent_cls:
+                        break
 
             if layout_parent_cls:
                 layout_parent_cls = _layouts[layout_parent_cls]
@@ -567,8 +568,11 @@ class ComponentManager(PersistationManager):
         for child in node:
             child_data = self.node_data.get(child)
             if child_data and child_data.component:
-                childs.append(child_data.component)
+                if getattr(child_data.component.properties, 'layout', True):
+                    childs.append(child_data.component)
+                    continue
 
+            childs.extend(self.get_layout_children(child))
         return childs
 
     def compute_recommended_size(self, node):
