@@ -60,7 +60,7 @@ class PangoContext(Injectable):
 
     def on_destroy(self):
         self._on_context_change.cancel()
-        super().on_destroy(self)
+        super().on_destroy()
 
     def on_canvas_context_change(self, context):
         self.context = pangocairo.create_context(context)

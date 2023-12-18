@@ -150,6 +150,9 @@ class PersistationManager():
 
         self.destroy_data(data_node.data)
 
+    def destroy_root(self):
+        self.destroy_data_node(self.root)
+
     def traverse(self, node, restored_data, parent_nodes):
         if restored_data is None:
             restored_data = self.DataNode()
@@ -221,7 +224,7 @@ class NodeObjects:
             self.component.on_destroy()
 
         if self.injectables:
-            for injectable in self.injectables.values():
+            for injectable in reversed(self.injectables.values()):
                 injectable.on_destroy()
 
 
@@ -596,3 +599,4 @@ class ComponentManager(PersistationManager):
 def run(interval=1/30, global_style=None):
     manager = ComponentManager(global_style)  # noqa: F841
     app.run(interval=interval)
+    manager.destroy_root()
