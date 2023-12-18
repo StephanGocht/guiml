@@ -427,8 +427,9 @@ class ComponentManager(PersistationManager):
             classes.update(node_classes.split(" "))
 
         for key, value in node.items():
-            if key.startswith("class_") and value():
-                classes.add(key[6:])
+            prefix = "_expanded_class_"
+            if key.startswith(prefix) and value():
+                classes.add(key[len(prefix):])
 
         for node_styles in get_applicable_styles(styles, node.get("id"), node.tag, classes):
             data = merge_data(data, node_styles)

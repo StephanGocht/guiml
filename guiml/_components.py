@@ -28,6 +28,9 @@ class StyleClassHandler:
 
         self.classes[style_class] = condition
 
+    def __contains__(self, style_class):
+        return style_class in self.get()
+
     def remove(self, style_class: str):
         """
         Remove the given style class.

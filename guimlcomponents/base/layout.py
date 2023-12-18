@@ -190,7 +190,7 @@ class AlignLayout:
             'bottom right',
         ] = 'center'
 
-        stretch: Literal['horizontal', 'vertical', ''] = ''
+        stretch: Literal['horizontal', 'vertical', 'both', ''] = ''
 
     def __init__(self, component):
         self.component = component
@@ -235,10 +235,10 @@ class AlignLayout:
             child_pos.width = child.width
             child_pos.height = child.height
 
-            if child.properties.stretch == 'horizontal':
+            if child.properties.stretch in ['horizontal', 'both']:
                 child_pos.left = position.left
                 child_pos.right = position.right
-            elif child.properties.stretch == 'vertical':
+            if child.properties.stretch in ['vertical', 'both']:
                 child_pos.top = position.top
                 child_pos.bottom = position.bottom
 

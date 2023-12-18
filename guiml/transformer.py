@@ -181,12 +181,16 @@ class ControlTransformer:
                     node.set(key, new_value)
             elif key.startswith("class_"):
                 value = f"bool({node.get(key)})"
+                del_atribute(node, key)
 
                 def condition(value=value, context=context):
                     result = eval(value, None, context)
                     return result
 
-                node.set(key, condition)
+                # todo: the transformation should only be called once on the
+                # template but is called multiple times, thus we need to
+                # rename the tag to avoid double expansion
+                node.set(f'_expanded_{key}', condition)
 
         return modified
 
@@ -219,7 +223,6 @@ class ControlTransformer:
                 elif control[:3] == "for":
                     items = self.eval_for(control, context)
                     offset += -1 + len(items)
-
                     node.remove(child)
 
                     for j, sibling_context in enumerate(items):
