@@ -237,7 +237,7 @@ class TimeIt(Injectable):
     def on_init(self):
         super().on_init()
 
-        clock.schedule_interval(self.print, 1.)
+        clock.schedule_interval(self.print, 2.)
 
     def on_destroy(self):
         super().on_destroy()
@@ -256,10 +256,10 @@ class UILoop(Injectable):
         self.set_active_update_rate()
 
     def set_active_update_rate(self):
-        self.set_update_rate(None)
+        self.set_update_rate(1/30)
 
     def set_inactive_update_rate(self):
-        self.set_update_rate(5.)
+        self.set_update_rate(1.)
 
     def set_update_rate(self, rate):
         clock.unschedule(self._update)

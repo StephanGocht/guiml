@@ -432,6 +432,7 @@ class ComponentManager(PersistationManager):
 
         return data
 
+    # @timeit('renew > ')
     def make_properties(self, component_cls, node, parents,
                         additional_classes=None):
         data = self.collect_properties(node, additional_classes)
@@ -470,8 +471,7 @@ class ComponentManager(PersistationManager):
                 property_classes.append(layout_parent_cls.ChildProperties)
 
         property_class = mk_dataclass("Properties", tuple(property_classes))
-        with timeit.record('ComponentManager::structure'):
-            properties = structure(data, property_class)
+        properties = structure(data, property_class)
         return properties
 
     def renew_layout(self, data):
@@ -517,6 +517,7 @@ class ComponentManager(PersistationManager):
                 type(data.component), node, parent_nodes,
                 data.component.style_classes.get())
 
+    # @timeit('renew > ')
     def on_data_renewed(self, data, node, parent_nodes):
         self.renew_layout(data)
         self.node_data[node] = data

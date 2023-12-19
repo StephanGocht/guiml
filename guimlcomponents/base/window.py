@@ -1,6 +1,6 @@
 from guiml._components import Component
 from guiml.registry import component
-from guiml.injectables import Observable, Injectable, injectable, UILoop
+from guiml.injectables import Observable, Injectable, injectable, UILoop, timeit
 import cairocffi as cairo
 import functools
 from dataclasses import dataclass
@@ -278,6 +278,7 @@ class Window(Component):
 
         self.context.set_operator(cairo.OPERATOR_OVER)
 
+    # timeit('Window.')
     def on_update(self, dt):
         self.clear()
         self.dependencies.canvas.draw()

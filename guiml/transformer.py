@@ -39,6 +39,7 @@ class DynamicDOM:
 
     def update(self, node, component):
         for manipulator in self.manipulators:
+            # with timeit.record(manipulator.__class__.__name__):
             manipulator(node, component)
 
 
@@ -154,6 +155,7 @@ class ControlTransformer:
         exec(for_loop % {"for_loop": control}, None, local)
         return local["__result__"]
 
+    # @timeit('renew > on_data_renewed > ')
     def transform_attributes(self, node, context):
         modified = False
 
