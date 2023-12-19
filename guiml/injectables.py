@@ -1,13 +1,16 @@
 import dataclasses
-from dataclasses import dataclass
+import statistics
+from dataclasses import dataclass, field
 
 from typing import Optional
 import typing
+import time
 
 from pyglet import clock
 
 from guiml.registry import injectable
 from guiml.registry import _injectables
+from contextlib import contextmanager
 
 
 class Injectable:
@@ -191,6 +194,60 @@ class Subscriber:
             subscription.cancel()
 
 
+@dataclass
+class TimeRecords:
+    records: dict[list[float]] = field(default_factory=dict)
+
+    def reset(self):
+        for value in self.records.values():
+            value.append(0.)
+            if len(value) > 10:
+                value.pop(0)
+
+    @contextmanager
+    def record(self, name):
+        start = time.perf_counter()
+        try:
+            yield
+        finally:
+            end = time.perf_counter()
+            records = self.records.setdefault(name, list())
+            if len(records) == 0:
+                records.append(0)
+
+            records[-1] += end - start
+
+    def __call__(self, prefix=''):
+        def decorator(fn):
+            name = prefix + fn.__name__
+
+            def result(*args, **kwargs):
+                with self.record(name):
+                    return fn(*args, **kwargs)
+
+            return result
+        return decorator
+
+
+timeit = TimeRecords()
+
+
+@injectable("application")
+class TimeIt(Injectable):
+    def on_init(self):
+        super().on_init()
+
+        clock.schedule_interval(self.print, 1.)
+
+    def on_destroy(self):
+        super().on_destroy()
+
+    def print(self, dt):
+        for key, value in timeit.records.items():
+            median = statistics.median(value)
+            print(f'{key}: {median}')
+
+
 @injectable("application")
 class UILoop(Injectable):
 
@@ -199,14 +256,18 @@ class UILoop(Injectable):
         self.set_active_update_rate()
 
     def set_active_update_rate(self):
-        self.set_update_rate(0.01)
+        self.set_update_rate(None)
 
     def set_inactive_update_rate(self):
         self.set_update_rate(5.)
 
     def set_update_rate(self, rate):
         clock.unschedule(self._update)
-        clock.schedule_interval(self._update, rate)
+        if rate is None:
+            clock.schedule(self._update)
+        else:
+            clock.schedule_interval(self._update, rate)
 
     def _update(self, dt):
+        timeit.reset()
         self.on_update(dt)

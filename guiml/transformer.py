@@ -2,6 +2,7 @@ import copy
 import xml.etree.ElementTree as ET
 
 from guiml.registry import _components
+from guiml.injectables import timeit
 
 
 def del_atribute(node, attribute):

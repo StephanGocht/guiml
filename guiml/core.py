@@ -18,7 +18,7 @@ from guiml.transformer import (
 )
 
 from guiml.registry import _components, _layouts
-from guiml.injectables import Injector, UILoop
+from guiml.injectables import Injector, UILoop, TimeIt, timeit
 from guiml.resources import reload_resources
 
 import logging
@@ -367,11 +367,25 @@ def get_applicable_styles(styles, node_id, name, classes):
     return result
 
 
+_class_cache = dict()
+
+
+def mk_dataclass(name, superclasses):
+    superclasses = tuple(superclasses)
+    if superclasses not in _class_cache:
+        result = dataclass(type(name, superclasses, dict()))
+        _class_cache[superclasses] = result
+        return result
+    else:
+        return _class_cache[superclasses]
+
+
 class ComponentManager(PersistationManager):
 
     @dataclass
     class Dependencies:
         ui_loop: UILoop
+        timeit: TimeIt
 
     PERSISTANCE_KEY_ATTRIBUTE = "persistance_key"
 
@@ -475,9 +489,9 @@ class ComponentManager(PersistationManager):
                 layout_parent_cls = _layouts[layout_parent_cls]
                 property_classes.append(layout_parent_cls.ChildProperties)
 
-        property_class = dataclass(
-            type("Properties", tuple(property_classes), dict()))
-        properties = structure(data, property_class)
+        property_class = mk_dataclass("Properties", tuple(property_classes))
+        with timeit.record('ComponentManager::structure'):
+            properties = structure(data, property_class)
         return properties
 
     def renew_layout(self, data):
