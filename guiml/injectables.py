@@ -252,14 +252,16 @@ class TimeIt(Injectable):
 class UILoop(Injectable):
 
     def on_init(self):
+        self.active_rate = 1/30
+        self.inactive_rate = 1.
         self.on_update = Observable()
         self.set_active_update_rate()
 
     def set_active_update_rate(self):
-        self.set_update_rate(1/30)
+        self.set_update_rate(self.active_rate)
 
     def set_inactive_update_rate(self):
-        self.set_update_rate(1.)
+        self.set_update_rate(self.inactive_rate)
 
     def set_update_rate(self, rate):
         clock.unschedule(self._update)
