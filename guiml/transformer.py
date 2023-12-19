@@ -105,13 +105,8 @@ class TemplatesTransformer:
                 data, changed = meta_data.template.get()
 
                 if data is not None:
-                    # todo: why do we check changed here? If this actually does
-                    # something then the update isn't correct, because changed
-                    # will only be true for the first time we request the template.
-                    if not self.is_expanded(node) or changed:
-                        self.insert_template(node, data, meta_data.style)
-
-                        return True
+                    self.insert_template(node, data, meta_data.style)
+                    return True
 
         return False
 
@@ -196,52 +191,46 @@ class ControlTransformer:
         return modified
 
     def transform(self, node, context, component_root=False):
-        modified = False
+        new_node = ET.Element(node.tag, attrib=copy.copy(node.attrib))
+        new_node.text = node.text
+        new_node.tail = node.tail
 
         if not component_root:
-            modified |= self.transform_attributes(node, context)
+            self.transform_attributes(new_node, context)
 
-        offset = 0
-        for i in range(len(node)):
-            child = node[i + offset]
-
+        for child in node:
             control = child.get(self.CONTROL_ATTRIBUTE)
             if not control:
-                modified |= self.transform(child, context)
+                new_node.append(self.transform(child, context))
             else:
                 control = control.strip()
                 del_atribute(child, self.CONTROL_ATTRIBUTE)
-                modified = True
 
                 if control[:2] == "if":
                     display = self.eval_if(control, context)
                     if display:
-                        self.transform(child, context)
-                    else:
-                        node.remove(child)
-                        offset += -1
+                        new_node.append(self.transform(child, context))
 
                 elif control[:3] == "for":
                     items = self.eval_for(control, context)
-                    offset += -1 + len(items)
-                    node.remove(child)
 
                     for j, sibling_context in enumerate(items):
-                        sibling = copy.deepcopy(child)
-                        node.insert(i + j, sibling)
-                        # sibling_context = {**context, **item}
+                        new_node.append(self.transform(child, sibling_context))
 
-                        # sibling.set(CONTEXT_ATTRIBUTE, sibling_context)
-                        self.transform(sibling, sibling_context)
-
-        return modified
+        return new_node
 
     def __call__(self, node, component):
-        # context = {"self": component}
-        # node.set(CONTEXT_ATTRIBUTE, context)
-        # node.set(CLEAR_CONTEXT_ATTRIBUTE, True)
+        meta_data = _components.get(node.tag)
 
-        return self.transform(node, {"self": component}, component_root=True)
+        if not meta_data or meta_data.template is None:
+            return
+
+        new_node = self.transform(node, {"self": component}, component_root=True)
+
+        # copy childs from new node, but otherwise keep original node
+        for i in reversed(range(len(node))):
+            del node[i]
+        node.extend(new_node)
 
     # @classmethod
     # def iter_context(cls, node):
