@@ -128,8 +128,13 @@ class ControlTransformer:
     CLEAR_CONTEXT_ATTRIBUTE = "_clear_context"
 
     def __init__(self):
-        self.getter = lambda value, context: lambda self: eval(
-            value, None, context)
+        def getter(value, context):
+            def _getter(self):
+                return eval(value, None, context)
+
+            return _getter
+
+        self.getter = getter
 
         def setter(value, context):
 

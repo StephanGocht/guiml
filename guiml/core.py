@@ -228,33 +228,10 @@ class NodeObjects:
                 injectable.on_destroy()
 
 
-def make_intermediate_dataclass(base, properties):
-    # Create an intermediate dataclass that disables initialization of the
-    # property so that a bound value does not get overwritten
-
-    definitions = dict()
-    annotations = dict()
-
-    for name, data in properties.items():
-        value, field_type = data
-        annotations[name] = field_type
-        definitions[name] = dataclasses.field(init=False)
-
-    definitions['__annotations__'] = annotations
-    return dataclass(type("guiml_intermediate_class", (base, ), definitions))
-
-
 def add_properties(base, properties):
-    intermediate = make_intermediate_dataclass(base, properties)
-
-    definitions = dict()
-
     for name, data in properties.items():
         value, field_type = data
-        definitions[name] = value
-
-    return dataclass(
-        type('guiml_added_properties', (intermediate, ), definitions))
+        setattr(base, name, value)
 
 
 def structure(data, data_type):
@@ -295,9 +272,12 @@ def structure(data, data_type):
                         args[field.name] = structure(value, field.type)
 
         if properties:
-            data_type = add_properties(data_type, properties)
-
-        return data_type(**args)
+            new_type = type('guiml_added_properties', (data_type, ), {})
+            result = new_type(**args)
+            add_properties(new_type, properties)
+            return result
+        else:
+            return data_type(**args)
     else:
         try:
             return data_type(data)
