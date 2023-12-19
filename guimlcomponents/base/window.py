@@ -153,6 +153,8 @@ class Window(Component):
         self._on_draw_subscription = \
             self.dependencies.canvas.on_draw.subscribe(self.on_draw)
 
+        self.window.push_handlers(self.on_activate, self.on_deactivate)
+
     @property
     def content_position(self):
         return self.properties.position
@@ -169,6 +171,12 @@ class Window(Component):
         text = text.replace("\r\n", "\n")
         text = text.replace("\r", "\n")
         self.dependencies.text_control.on_text(text)
+
+    def on_activate(self):
+        self.dependencies.ui_loop.set_active_update_rate()
+
+    def on_deactivate(self):
+        self.dependencies.ui_loop.set_inactive_update_rate()
 
     def set_mouse_cursor(self, value):
         cursor = self.window.get_system_mouse_cursor(value)

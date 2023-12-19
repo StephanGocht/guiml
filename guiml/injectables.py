@@ -195,8 +195,18 @@ class Subscriber:
 class UILoop(Injectable):
 
     def on_init(self):
-        clock.schedule_interval(self._update, 0.01)
         self.on_update = Observable()
+        self.set_active_update_rate()
+
+    def set_active_update_rate(self):
+        self.set_update_rate(0.01)
+
+    def set_inactive_update_rate(self):
+        self.set_update_rate(5.)
+
+    def set_update_rate(self, rate):
+        clock.unschedule(self._update)
+        clock.schedule_interval(self._update, rate)
 
     def _update(self, dt):
         self.on_update(dt)
