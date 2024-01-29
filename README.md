@@ -55,6 +55,15 @@ Install external requirenments (to access librsvg, cairo, pango from python)
 
     sudo apt install librsvg2-dev libcairo2-dev python3-gi-cairo
 
+To install `gi` use either
+
+    sudo apt install python3-gi
+
+or
+
+    sudo apt install libgirepository1.0-dev
+    pip install pygobject
+
 If you run into problems with installing the dependencies, you can check out
 the links in the Other section below.
 
