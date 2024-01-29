@@ -14,6 +14,10 @@ class Color:
     blue: float = 0.
     alpha: float = 0.
 
+    @classmethod
+    def white(cls):
+        return Color(1., 1., 1., 1.)
+
 
 @dataclass
 class Border:

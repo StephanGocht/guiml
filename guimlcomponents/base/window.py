@@ -3,7 +3,7 @@ from guiml.registry import component
 from guiml.injectables import Observable, Injectable, injectable, UILoop, timeit
 import cairocffi as cairo
 import functools
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pyglet
 import ctypes
 from typing import Optional
@@ -126,7 +126,7 @@ class Window(Component):
         def position(self, value):
             pass
 
-        background: Optional[Color] = Color(1, 1, 1, 1)
+        background: Optional[Color] = field(default_factory=Color.white)
         """Background color to draw or None to draw nothing"""
 
         layout: str = "stack"

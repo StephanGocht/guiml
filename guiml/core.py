@@ -342,7 +342,6 @@ def get_applicable_styles(styles, node_id, name, classes):
                     result.append(((i, 2, score), data))
 
     result.sort(key=lambda x: x[0])
-
     result = [x[1] for x in reversed(result)]
     return result
 
@@ -399,8 +398,10 @@ class ComponentManager(PersistationManager):
         data = {}
 
         style_handler = [
-            meta_data.style,
+            # Style imposed from user of this component
             TemplatesTransformer.get_creator_style(node),
+            # Style from definition this component
+            meta_data.style,
             self.global_style
         ]
 
